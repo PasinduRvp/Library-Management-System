@@ -1,0 +1,449 @@
+import React, { useState, useEffect } from "react";
+import toast, { Toaster } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+
+const LaboratoryTestForm = () => {
+    const [formData, setFormData] = useState({
+        name: "",
+        ageYears: "",
+        ageMonths: "0",
+        address: "",
+        mobile: "",
+        gender: "",
+        testDate: "",
+        testData: ""
+    });
+    const [errors, setErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const navigate = useNavigate();
+
+    // Generate month options for the spinner (0-11)
+    const monthOptions = Array.from({ length: 12 }, (_, i) => i);
+
+    // Set default date to today when component mounts
+    useEffect(() => {
+        const today = new Date().toISOString().split('T')[0];
+        setFormData(prev => ({
+            ...prev,
+            testDate: today
+        }));
+    }, []);
+
+    const validateForm = () => {
+        const newErrors = {};
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const selectedDate = new Date(formData.testDate);
+        selectedDate.setHours(0, 0, 0, 0);
+    
+        // Name validation
+        if (!formData.name.trim()) {
+            newErrors.name = "Patient name is required";
+        } else if (formData.name.trim().length < 3) {
+            newErrors.name = "Name must be at least 3 characters";
+        }
+    
+        // Age validation - Years
+        if (!formData.ageYears) {
+            newErrors.ageYears = "Years is required";
+        } else if (isNaN(formData.ageYears) || parseInt(formData.ageYears) < 0 || parseInt(formData.ageYears) > 120) {
+            newErrors.ageYears = "Please enter valid years (0-120)";
+        }
+    
+        // Age validation - Months
+        if (formData.ageMonths === "" || isNaN(formData.ageMonths)) {
+            newErrors.ageMonths = "Months is required";
+        } else if (parseInt(formData.ageMonths) < 0 || parseInt(formData.ageMonths) > 11) {
+            newErrors.ageMonths = "Please select valid months (0-11)";
+        }
+    
+        // Address validation
+        if (!formData.address.trim()) {
+            newErrors.address = "Address is required";
+        } else if (formData.address.trim().length < 5) {
+            newErrors.address = "Address must be at least 5 characters";
+        }
+    
+        // Mobile validation
+        if (!formData.mobile) {
+            newErrors.mobile = "Mobile number is required";
+        } else if (!/^\d{10}$/.test(formData.mobile)) {
+            newErrors.mobile = "Please enter a valid 10-digit mobile number";
+        }
+    
+        // Gender validation
+        if (!formData.gender) {
+            newErrors.gender = "Please select gender";
+        }
+    
+        // Test date validation
+        if (!formData.testDate) {
+            newErrors.testDate = "Test date is required";
+        } else if (selectedDate > today) {
+            newErrors.testDate = "Test date cannot be in the future";
+        }
+    
+        // Test data validation
+        if (!formData.testData.trim()) {
+            newErrors.testData = "Test data is required";
+        }
+    
+        setErrors(newErrors);
+        
+        if (Object.keys(newErrors).length > 0) {
+            Object.values(newErrors).forEach(error => toast.error(error));
+            return false;
+        }
+        return true;
+    };
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: ["mobile", "ageYears"].includes(name) ? 
+                   value.replace(/[^0-9]/g, "") : value
+        }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        
+
+        if (!validateForm()) {
+            setIsSubmitting(false);
+            return;
+        }
+
+        try {
+            const response = await fetch("http://localhost:8080/api/add-test", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    ...formData,
+                    ageYears: parseInt(formData.ageYears),
+                    ageMonths: parseInt(formData.ageMonths),
+                    name: formData.name.trim(),
+                    address: formData.address.trim(),
+                    testDate: new Date(formData.testDate).toISOString() // Ensure proper date format
+                }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                toast.success("Laboratory Test added successfully!");
+                setTimeout(() => navigate('/pharmacy-lab-panel/all-tests'), 1000);
+                setFormData({
+                    name: "",
+                    ageYears: "",
+                    ageMonths: "0",
+                    address: "",
+                    mobile: "",
+                    gender: "",
+                    testDate: new Date().toISOString().split('T')[0], // Reset to today's date
+                    testData: ""
+                });
+            } else {
+                toast.error(result.message || "Failed to save test data");
+            }
+        } catch (error) {
+            toast.error("Network error. Please check your connection and try again.");
+            console.error("Submission error:", error);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const today = new Date().toISOString().split('T')[0];
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+            <Toaster position="top-center" />
+            <div className="max-w-4xl mx-auto">
+                <div className="bg-white shadow-xl rounded-lg overflow-hidden">
+                    {/* Form Header */}
+                    <div className="bg-blue-600 py-6 px-8">
+                        <div className="flex items-center justify-center space-x-3">
+                            <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                            </svg>
+                            <h2 className="text-2xl font-bold text-white text-center">
+                                Laboratory Test Form
+                            </h2>
+                        </div>
+                        <p className="text-blue-100 text-center mt-2">
+                            Please fill in all required fields marked with *
+                        </p>
+                    </div>
+
+                    {/* Form Content */}
+                    <div className="p-6 sm:p-8">
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            {/* Patient Information Section */}
+                            <div className="space-y-6">
+                                <h3 className="text-lg font-medium text-blue-800 border-b border-blue-200 pb-2">
+                                    Patient Information
+                                </h3>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Name */}
+                                    <div className="md:col-span-2">
+                                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                                            Full Name <span className="text-red-500">*</span>
+                                        </label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                </svg>
+                                            </div>
+                                            <input
+                                                type="text"
+                                                id="name"
+                                                name="name"
+                                                value={formData.name}
+                                                onChange={handleChange}
+                                                className={`pl-10 w-full px-4 py-2 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
+                                                placeholder="Enter patient's full name"
+                                                maxLength={50}
+                                            />
+                                        </div>
+                                        {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+                                    </div>
+
+                                    {/* Age Group */}
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Age <span className="text-red-500">*</span>
+                                        </label>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div>
+                                                <label htmlFor="ageYears" className="sr-only">Years</label>
+                                                <div className="flex rounded-md shadow-sm">
+                                                    <input
+                                                        type="text"
+                                                        id="ageYears"
+                                                        name="ageYears"
+                                                        value={formData.ageYears}
+                                                        onChange={handleChange}
+                                                        className={`flex-1 min-w-0 block w-full px-4 py-2 rounded-md border ${errors.ageYears ? 'border-red-500' : 'border-gray-300'} focus:ring-blue-500 focus:border-blue-500`}
+                                                        placeholder="Years"
+                                                        inputMode="numeric"
+                                                        pattern="[0-9]*"
+                                                        maxLength={3}
+                                                    />
+                                                    <span className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500">
+                                                        years
+                                                    </span>
+                                                </div>
+                                                {errors.ageYears && <p className="mt-1 text-sm text-red-600">{errors.ageYears}</p>}
+                                            </div>
+                                            <div>
+                                                <label htmlFor="ageMonths" className="sr-only">Months</label>
+                                                <div className="flex rounded-md shadow-sm">
+                                                    <select
+                                                        id="ageMonths"
+                                                        name="ageMonths"
+                                                        value={formData.ageMonths}
+                                                        onChange={handleChange}
+                                                        className={`flex-1 min-w-0 block w-full px-4 py-2 rounded-l-md border ${errors.ageMonths ? 'border-red-500' : 'border-gray-300'} focus:ring-blue-500 focus:border-blue-500`}
+                                                    >
+                                                        {monthOptions.map(month => (
+                                                            <option key={month} value={month}>
+                                                                {month}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <span className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500">
+                                                        months
+                                                    </span>
+                                                </div>
+                                                {errors.ageMonths && <p className="mt-1 text-sm text-red-600">{errors.ageMonths}</p>}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Address */}
+                                    <div className="md:col-span-2">
+                                        <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                                            Address <span className="text-red-500">*</span>
+                                        </label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                            </div>
+                                            <input
+                                                type="text"
+                                                id="address"
+                                                name="address"
+                                                value={formData.address}
+                                                onChange={handleChange}
+                                                className={`pl-10 w-full px-4 py-2 border ${errors.address ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
+                                                placeholder="Street, City, State"
+                                                maxLength={100}
+                                            />
+                                        </div>
+                                        {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address}</p>}
+                                    </div>
+
+                                    {/* Mobile - Updated with icon */}
+                                    <div>
+                                        <label htmlFor="mobile" className="block text-sm font-medium text-gray-700 mb-1">
+                                            Mobile Number <span className="text-red-500">*</span>
+                                        </label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                                </svg>
+                                            </div>
+                                            <div className="absolute inset-y-0 left-8 flex items-center">
+                                            </div>
+                                            <input
+                                                type="text"
+                                                id="mobile"
+                                                name="mobile"
+                                                value={formData.mobile}
+                                                onChange={handleChange}
+                                                className={`pl-10 w-full px-4 py-2 border ${errors.mobile ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
+                                                placeholder="Enter Mobile Number"
+                                                inputMode="tel"
+                                                maxLength={10}
+                                            />
+                                        </div>
+                                        {errors.mobile && <p className="mt-1 text-sm text-red-600">{errors.mobile}</p>}
+                                    </div>
+
+                                    {/* Gender */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Gender <span className="text-red-500">*</span>
+                                        </label>
+                                        <div className="flex space-x-4">
+                                            <label className="inline-flex items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="gender"
+                                                    value="Male"
+                                                    checked={formData.gender === "Male"}
+                                                    onChange={handleChange}
+                                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                                />
+                                                <span className="ml-2 text-gray-700">Male</span>
+                                            </label>
+                                            <label className="inline-flex items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="gender"
+                                                    value="Female"
+                                                    checked={formData.gender === "Female"}
+                                                    onChange={handleChange}
+                                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                                />
+                                                <span className="ml-2 text-gray-700">Female</span>
+                                            </label>
+                                        </div>
+                                        {errors.gender && <p className="mt-1 text-sm text-red-600">{errors.gender}</p>}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Test Information Section */}
+                            <div className="space-y-6">
+                                <h3 className="text-lg font-medium text-blue-800 border-b border-blue-200 pb-2">
+                                    Test Information
+                                </h3>
+                                
+                                <div className="grid grid-cols-1 gap-6">
+                                    {/* Test Date */}
+                                    <div className="w-full md:w-1/2">
+                                        <label htmlFor="testDate" className="block text-sm font-medium text-gray-700 mb-1">
+                                            Test Date <span className="text-red-500">*</span>
+                                        </label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                            </div>
+                                            <input
+                                                type="date"
+                                                id="testDate"
+                                                name="testDate"
+                                                value={formData.testDate}
+                                                onChange={handleChange}
+                                                className={`pl-10 w-full px-4 py-2 border ${errors.testDate ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
+                                                max={today}
+                                            />
+                                        </div>
+                                        {errors.testDate && <p className="mt-1 text-sm text-red-600">{errors.testDate}</p>}
+                                    </div>
+
+                                    {/* Test Data */}
+                                    <div>
+                                        <label htmlFor="testData" className="block text-sm font-medium text-gray-700 mb-1">
+                                            Test Details <span className="text-red-500">*</span>
+                                        </label>
+                                        <div className="relative">
+                                            <textarea
+                                                id="testData"
+                                                name="testData"
+                                                value={formData.testData}
+                                                onChange={handleChange}
+                                                className={`w-full px-4 py-2 border ${errors.testData ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 h-40`}
+                                                placeholder="Enter test details, observations, and results..."
+                                            />
+                                        </div>
+                                        {errors.testData && <p className="mt-1 text-sm text-red-600">{errors.testData}</p>}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Form Actions */}
+                            <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => navigate('/pharmacy-lab-panel/all-tests')}
+                                    className="px-6 py-3 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className={`px-6 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 ${
+                                        isSubmitting ? "opacity-75 cursor-not-allowed" : ""
+                                    }`}
+                                >
+                                    {isSubmitting ? (
+                                        <span className="flex items-center justify-center">
+                                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Processing...
+                                        </span>
+                                    ) : (
+                                        <span className="flex items-center justify-center">
+                                            <svg className="-ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Save Laboratory Test
+                                        </span>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default LaboratoryTestForm;
