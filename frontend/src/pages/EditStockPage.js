@@ -200,7 +200,7 @@ const EditStockPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         <div className="bg-white shadow-xl rounded-lg overflow-hidden">
-          {/* Form Header */}
+          {}
           <div className="bg-blue-600 py-6 px-8">
             <h2 className="text-2xl font-bold text-white text-center">
               Edit Pharmacy Item
@@ -210,11 +210,11 @@ const EditStockPage = () => {
             </p>
           </div>
 
-          {/* Form Content */}
+          {}
           <div className="p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Item Name */}
+                {}
                 <div className="md:col-span-2">
                   <label htmlFor="stockName" className="block text-sm font-medium text-gray-700 mb-1">
                     Item Name <span className="text-red-500">*</span>
@@ -230,7 +230,7 @@ const EditStockPage = () => {
                   />
                 </div>
 
-                {/* Item Type */}
+                {}
                 <div>
                   <label htmlFor="stockType" className="block text-sm font-medium text-gray-700 mb-1">
                     Item Type <span className="text-red-500">*</span>
@@ -250,7 +250,7 @@ const EditStockPage = () => {
                   {errors.stockType && <p className="mt-1 text-sm text-red-600">{errors.stockType}</p>}
                 </div>
 
-                {/* Item Quantity */}
+                {}
                 <div>
                   <label htmlFor="stockCount" className="block text-sm font-medium text-gray-700 mb-1">
                     Item Quantity <span className="text-red-500">*</span>
@@ -269,7 +269,7 @@ const EditStockPage = () => {
                   {errors.stockCount && <p className="mt-1 text-sm text-red-600">{errors.stockCount}</p>}
                 </div>
 
-                {/* Manufacturing Date */}
+                {}
                 <div>
                   <label htmlFor="mfDate" className="block text-sm font-medium text-gray-700 mb-1">
                     Manufacturing Date <span className="text-red-500">*</span>
@@ -287,7 +287,7 @@ const EditStockPage = () => {
                   {errors.mfDate && <p className="mt-1 text-sm text-red-600">{errors.mfDate}</p>}
                 </div>
 
-                {/* Expiry Date */}
+                {}
                 <div>
                   <label htmlFor="exDate" className="block text-sm font-medium text-gray-700 mb-1">
                     Expiry Date <span className="text-red-500">*</span>
@@ -305,7 +305,7 @@ const EditStockPage = () => {
                   {errors.exDate && <p className="mt-1 text-sm text-red-600">{errors.exDate}</p>}
                 </div>
 
-                {/* Company */}
+                {}
                 <div>
                   <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-1">
                     Company <span className="text-red-500">*</span>
@@ -324,7 +324,7 @@ const EditStockPage = () => {
                   {errors.company && <p className="mt-1 text-sm text-red-600">{errors.company}</p>}
                 </div>
 
-                {/* Dealer Name */}
+                {}
                 <div>
                   <label htmlFor="dealerName" className="block text-sm font-medium text-gray-700 mb-1">
                     Dealer Name <span className="text-red-500">*</span>
@@ -343,7 +343,7 @@ const EditStockPage = () => {
                   {errors.dealerName && <p className="mt-1 text-sm text-red-600">{errors.dealerName}</p>}
                 </div>
 
-                {/* Contact Number */}
+                {}
                 <div>
                   <label htmlFor="contact" className="block text-sm font-medium text-gray-700 mb-1">
                     Contact Number <span className="text-red-500">*</span>
@@ -366,7 +366,7 @@ const EditStockPage = () => {
                 </div>
               </div>
 
-              {/* Form Actions */}
+              {}
               <div className="flex justify-end space-x-4 pt-4">
                 <button
                   type="button"

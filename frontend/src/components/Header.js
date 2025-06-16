@@ -155,6 +155,17 @@ const Header = () => {
                       )
                     }
                     {
+                      (user?.role === ROLE.ADMIN || user?.role === ROLE.DOCTOR ) && (
+                        <Link 
+                          to={"/patient-records"} 
+                          className='whitespace-nowrap hover:bg-slate-100 p-2 rounded'
+                          onClick={() => setMenuDisplay(false)}
+                        >
+                          Patient Records
+                        </Link>
+                      )
+                    }
+                    {
                       <Link 
                       to={"/profile"} 
                       className='whitespace-nowrap hover:bg-slate-100 p-2 rounded'

@@ -108,7 +108,7 @@ const AllItemsPage = () => {
     }
   };
 
-  // Function to display quantity with "Not Available" for zero count
+  
   const displayQuantity = (count) => {
     if (count === 0 || count === '0') {
       return <span className="text-red-600 font-medium">Not Available</span>;

@@ -4,10 +4,13 @@ import SummaryApi from "../common";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import { jsPDF } from "jspdf";
+import { useSelector } from "react-redux";
+import ROLE from "../common/role";
 
 const HomeVisitAppointment = ({ data, fetchData, onEditClick }) => {
   const [loading, setLoading] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const user = useSelector((state) => state?.user?.user);
 
   const handleDelete = async () => {
     setLoading(true);
@@ -223,16 +226,18 @@ const HomeVisitAppointment = ({ data, fetchData, onEditClick }) => {
             <span>Edit</span>
           </motion.button>
 
-          <motion.button 
-            className="flex items-center gap-1 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-lg transition-colors"
-            onClick={showDeleteConfirmation}
-            disabled={loading}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <MdOutlineDelete className="text-lg" />
-            <span>{loading ? "Deleting..." : "Delete"}</span>
-          </motion.button>
+          {user?.role !== ROLE.DOCTOR && (
+            <motion.button 
+              className="flex items-center gap-1 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-lg transition-colors"
+              onClick={showDeleteConfirmation}
+              disabled={loading}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <MdOutlineDelete className="text-lg" />
+              <span>{loading ? "Deleting..." : "Delete"}</span>
+            </motion.button>
+          )}
         </div>
       </div>
     </motion.div>

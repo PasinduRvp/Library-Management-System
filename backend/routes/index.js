@@ -32,6 +32,8 @@ const deleteNotice = require('../controller/deleteNotice')
 const { getMarks, addMark, updateMark, deleteMark, getMarksByStudent } = require("../controller/marksController")
 const { getCourseMaterials, addCourseMaterial, updateCourseMaterial, deleteCourseMaterial } = require("../controller/courseMaterialController");
 const checkIndexNumber = require('../controller/checkIndexNumberController');
+const patientController = require('../controller/patientRecordsController');
+
 
 // User routes
 router.post("/signup", userSignUpController)
@@ -102,6 +104,23 @@ router.post("/add-marks", addMark)
 router.patch("/update-marks/:id", updateMark)
 router.delete("/delete-marks/:id", deleteMark)
 router.get("/marks/student/:studentNumber", getMarksByStudent)
+
+
+
+const {
+    getUserById,
+    updateMedicalRecord,
+    getMedicalRecords
+} = require('../controller/patientRecordsController');
+
+
+// Medical records routes
+router.get('/:id/medical-records',  getMedicalRecords);
+router.post('/:id/medical-records',  updateMedicalRecord);
+router.get('/:id', getUserById);
+
+
+
 
 // File download route
 router.get('/download/:filename', async (req, res) => {

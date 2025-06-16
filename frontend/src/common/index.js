@@ -211,6 +211,19 @@ const SummaryApi = {
         url: (studentNumber) => `${backendDomain}/api/marks/student/${studentNumber}`,
         method: "GET",
       },
+      
+getUserById: {
+    url: (id) => `${backendDomain}/api/users/${id}`,
+    method: "GET"
+},
+getMedicalRecords: {
+    url: (id) => `${backendDomain}/api/users/${id}/medical-records`,
+    method: "GET"
+},
+updateMedicalRecords: {
+    url: (id) => `${backendDomain}/api/users/${id}/medical-records`,
+    method: "POST"
+}
 
 
 

@@ -24,7 +24,7 @@ const AllStockPage = () => {
         }
 
         const data = await fetchData.json();
-        console.log("API Response:", data); // Debug log
+        console.log("API Response:", data); 
 
         if (data.success) {
           setStocks(data.data);

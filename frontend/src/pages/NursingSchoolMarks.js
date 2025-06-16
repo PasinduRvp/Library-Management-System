@@ -381,10 +381,6 @@ const MarkAllocation = () => {
                 {studentInfo?.year || user?.year || "N/A"} - {studentInfo?.semester || user?.semester || "N/A"}
               </p>
             </div>
-            <div>
-              <p className="text-sm text-gray-500 font-medium">Current GPA</p>
-              <p className="text-lg font-semibold">{calculateGPA(marks)}</p>
-            </div>
           </motion.div>
         )}
 
@@ -424,9 +420,6 @@ const MarkAllocation = () => {
                     {testName}
                   </h3>
                   <div className="flex items-center space-x-4">
-                    <span className="text-sm font-medium">
-                      Average: {calculateGPA(testMarks)}
-                    </span>
                     <button
                       onClick={() => downloadTestPdf(testName, testMarks)}
                       disabled={generatingPdf[testName]}

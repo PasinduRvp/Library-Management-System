@@ -17,10 +17,10 @@ const LaboratoryTestForm = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const navigate = useNavigate();
 
-    // Generate month options for the spinner (0-11)
+    
     const monthOptions = Array.from({ length: 12 }, (_, i) => i);
 
-    // Set default date to today when component mounts
+    
     useEffect(() => {
         const today = new Date().toISOString().split('T')[0];
         setFormData(prev => ({
@@ -36,54 +36,54 @@ const LaboratoryTestForm = () => {
         const selectedDate = new Date(formData.testDate);
         selectedDate.setHours(0, 0, 0, 0);
     
-        // Name validation
+        
         if (!formData.name.trim()) {
             newErrors.name = "Patient name is required";
         } else if (formData.name.trim().length < 3) {
             newErrors.name = "Name must be at least 3 characters";
         }
     
-        // Age validation - Years
+        
         if (!formData.ageYears) {
             newErrors.ageYears = "Years is required";
         } else if (isNaN(formData.ageYears) || parseInt(formData.ageYears) < 0 || parseInt(formData.ageYears) > 120) {
             newErrors.ageYears = "Please enter valid years (0-120)";
         }
     
-        // Age validation - Months
+        
         if (formData.ageMonths === "" || isNaN(formData.ageMonths)) {
             newErrors.ageMonths = "Months is required";
         } else if (parseInt(formData.ageMonths) < 0 || parseInt(formData.ageMonths) > 11) {
             newErrors.ageMonths = "Please select valid months (0-11)";
         }
     
-        // Address validation
+        
         if (!formData.address.trim()) {
             newErrors.address = "Address is required";
         } else if (formData.address.trim().length < 5) {
             newErrors.address = "Address must be at least 5 characters";
         }
     
-        // Mobile validation
+       
         if (!formData.mobile) {
             newErrors.mobile = "Mobile number is required";
         } else if (!/^\d{10}$/.test(formData.mobile)) {
             newErrors.mobile = "Please enter a valid 10-digit mobile number";
         }
     
-        // Gender validation
+        
         if (!formData.gender) {
             newErrors.gender = "Please select gender";
         }
     
-        // Test date validation
+        
         if (!formData.testDate) {
             newErrors.testDate = "Test date is required";
         } else if (selectedDate > today) {
             newErrors.testDate = "Test date cannot be in the future";
         }
     
-        // Test data validation
+        
         if (!formData.testData.trim()) {
             newErrors.testData = "Test data is required";
         }
@@ -126,7 +126,7 @@ const LaboratoryTestForm = () => {
                     ageMonths: parseInt(formData.ageMonths),
                     name: formData.name.trim(),
                     address: formData.address.trim(),
-                    testDate: new Date(formData.testDate).toISOString() // Ensure proper date format
+                    testDate: new Date(formData.testDate).toISOString() 
                 }),
             });
 
@@ -142,7 +142,7 @@ const LaboratoryTestForm = () => {
                     address: "",
                     mobile: "",
                     gender: "",
-                    testDate: new Date().toISOString().split('T')[0], // Reset to today's date
+                    testDate: new Date().toISOString().split('T')[0], 
                     testData: ""
                 });
             } else {
@@ -163,7 +163,7 @@ const LaboratoryTestForm = () => {
             <Toaster position="top-center" />
             <div className="max-w-4xl mx-auto">
                 <div className="bg-white shadow-xl rounded-lg overflow-hidden">
-                    {/* Form Header */}
+                    {}
                     <div className="bg-blue-600 py-6 px-8">
                         <div className="flex items-center justify-center space-x-3">
                             <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -178,17 +178,17 @@ const LaboratoryTestForm = () => {
                         </p>
                     </div>
 
-                    {/* Form Content */}
+                    {}
                     <div className="p-6 sm:p-8">
                         <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* Patient Information Section */}
+                            {}
                             <div className="space-y-6">
                                 <h3 className="text-lg font-medium text-blue-800 border-b border-blue-200 pb-2">
                                     Patient Information
                                 </h3>
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* Name */}
+                                    {}
                                     <div className="md:col-span-2">
                                         <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                                             Full Name <span className="text-red-500">*</span>
@@ -213,7 +213,7 @@ const LaboratoryTestForm = () => {
                                         {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
                                     </div>
 
-                                    {/* Age Group */}
+                                    {}
                                     <div className="md:col-span-2">
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             Age <span className="text-red-500">*</span>
@@ -265,7 +265,7 @@ const LaboratoryTestForm = () => {
                                         </div>
                                     </div>
 
-                                    {/* Address */}
+                                    {}
                                     <div className="md:col-span-2">
                                         <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
                                             Address <span className="text-red-500">*</span>
@@ -291,7 +291,7 @@ const LaboratoryTestForm = () => {
                                         {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address}</p>}
                                     </div>
 
-                                    {/* Mobile - Updated with icon */}
+                                    {}
                                     <div>
                                         <label htmlFor="mobile" className="block text-sm font-medium text-gray-700 mb-1">
                                             Mobile Number <span className="text-red-500">*</span>
@@ -319,7 +319,7 @@ const LaboratoryTestForm = () => {
                                         {errors.mobile && <p className="mt-1 text-sm text-red-600">{errors.mobile}</p>}
                                     </div>
 
-                                    {/* Gender */}
+                                    {}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             Gender <span className="text-red-500">*</span>
@@ -353,14 +353,14 @@ const LaboratoryTestForm = () => {
                                 </div>
                             </div>
 
-                            {/* Test Information Section */}
+                            {}
                             <div className="space-y-6">
                                 <h3 className="text-lg font-medium text-blue-800 border-b border-blue-200 pb-2">
                                     Test Information
                                 </h3>
                                 
                                 <div className="grid grid-cols-1 gap-6">
-                                    {/* Test Date */}
+                                    {}
                                     <div className="w-full md:w-1/2">
                                         <label htmlFor="testDate" className="block text-sm font-medium text-gray-700 mb-1">
                                             Test Date <span className="text-red-500">*</span>
@@ -384,7 +384,7 @@ const LaboratoryTestForm = () => {
                                         {errors.testDate && <p className="mt-1 text-sm text-red-600">{errors.testDate}</p>}
                                     </div>
 
-                                    {/* Test Data */}
+                                    {}
                                     <div>
                                         <label htmlFor="testData" className="block text-sm font-medium text-gray-700 mb-1">
                                             Test Details <span className="text-red-500">*</span>
@@ -404,7 +404,7 @@ const LaboratoryTestForm = () => {
                                 </div>
                             </div>
 
-                            {/* Form Actions */}
+                            {}
                             <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6">
                                 <button
                                     type="button"

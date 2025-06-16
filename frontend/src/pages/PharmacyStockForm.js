@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 const PharmacyStockFormPage = () => {
     const [formData, setFormData] = useState({
         stockName: "",
-        stockType: "tablet", // Default to tablet
+        stockType: "tablet", 
         stockCount: 1,
         mfDate: "",
         exDate: "",
@@ -169,7 +169,7 @@ const PharmacyStockFormPage = () => {
             <Toaster position="top-center" />
             <div className="max-w-4xl mx-auto">
                 <div className="bg-white shadow-xl rounded-lg overflow-hidden">
-                    {/* Form Header */}
+                    {}
                     <div className="bg-blue-600 py-6 px-8">
                         <div className="flex items-center justify-center space-x-3">
                             <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -184,17 +184,17 @@ const PharmacyStockFormPage = () => {
                         </p>
                     </div>
 
-                    {/* Form Content */}
+                    {}
                     <div className="p-6 sm:p-8">
                         <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* Item Information Section */}
+                            {}
                             <div className="space-y-6">
                                 <h3 className="text-lg font-medium text-blue-800 border-b border-blue-200 pb-2">
                                     Item Information
                                 </h3>
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* Item Name */}
+                                    {}
                                     <div>
                                         <label htmlFor="stockName" className="block text-sm font-medium text-gray-700 mb-1">
                                             Item Name <span className="text-red-500">*</span>
@@ -219,7 +219,7 @@ const PharmacyStockFormPage = () => {
                                         {errors.stockName && <p className="mt-1 text-sm text-red-600">{errors.stockName}</p>}
                                     </div>
 
-                                    {/* Item Type */}
+                                    {}
                                     <div>
                                         <label htmlFor="stockType" className="block text-sm font-medium text-gray-700 mb-1">
                                             Item Type <span className="text-red-500">*</span>
@@ -247,7 +247,7 @@ const PharmacyStockFormPage = () => {
                                         {errors.stockType && <p className="mt-1 text-sm text-red-600">{errors.stockType}</p>}
                                     </div>
 
-                                    {/* Item Quantity */}
+                                    {}
                                     <div>
                                         <label htmlFor="stockCount" className="block text-sm font-medium text-gray-700 mb-1">
                                             Quantity <span className="text-red-500">*</span>
@@ -272,7 +272,7 @@ const PharmacyStockFormPage = () => {
                                         {errors.stockCount && <p className="mt-1 text-sm text-red-600">{errors.stockCount}</p>}
                                     </div>
 
-                                    {/* Manufacturing Date */}
+                                    {}
                                     <div>
                                         <label htmlFor="mfDate" className="block text-sm font-medium text-gray-700 mb-1">
                                             Manufacturing Date <span className="text-red-500">*</span>
@@ -296,7 +296,7 @@ const PharmacyStockFormPage = () => {
                                         {errors.mfDate && <p className="mt-1 text-sm text-red-600">{errors.mfDate}</p>}
                                     </div>
 
-                                    {/* Expiry Date */}
+                                    {}
                                     <div>
                                         <label htmlFor="exDate" className="block text-sm font-medium text-gray-700 mb-1">
                                             Expiry Date <span className="text-red-500">*</span>
@@ -322,14 +322,14 @@ const PharmacyStockFormPage = () => {
                                 </div>
                             </div>
 
-                            {/* Supplier Information Section */}
+                            {}
                             <div className="space-y-6">
                                 <h3 className="text-lg font-medium text-blue-800 border-b border-blue-200 pb-2">
                                     Supplier Information
                                 </h3>
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* Company */}
+                                    {}
                                     <div>
                                         <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-1">
                                             Company <span className="text-red-500">*</span>
@@ -354,7 +354,7 @@ const PharmacyStockFormPage = () => {
                                         {errors.company && <p className="mt-1 text-sm text-red-600">{errors.company}</p>}
                                     </div>
 
-                                    {/* Dealer Name */}
+                                    {}
                                     <div>
                                         <label htmlFor="dealerName" className="block text-sm font-medium text-gray-700 mb-1">
                                             Dealer Name <span className="text-red-500">*</span>
@@ -379,7 +379,7 @@ const PharmacyStockFormPage = () => {
                                         {errors.dealerName && <p className="mt-1 text-sm text-red-600">{errors.dealerName}</p>}
                                     </div>
 
-                                    {/* Contact Number */}
+                                    {}
                                     <div>
                                         <label htmlFor="contact" className="block text-sm font-medium text-gray-700 mb-1">
                                             Contact Number <span className="text-red-500">*</span>
@@ -407,7 +407,7 @@ const PharmacyStockFormPage = () => {
                                 </div>
                             </div>
 
-                            {/* Form Actions */}
+                            {}
                             <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6">
                                 <button
                                     type="button"

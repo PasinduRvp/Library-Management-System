@@ -53,7 +53,7 @@ const ViewTestPage = () => {
         format: "a4"
       });
 
-      // Header Section
+      
       doc.setFontSize(20);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(0, 102, 204);
@@ -80,7 +80,7 @@ const ViewTestPage = () => {
       doc.setDrawColor(0, 102, 204);
       doc.line(14, 53, 196, 53);
 
-      // Patient Information Section
+      
       doc.setFontSize(12);
       doc.setTextColor(0, 0, 0);
       doc.setFont("helvetica", "bold");
@@ -102,17 +102,17 @@ const ViewTestPage = () => {
       doc.text(`Test Date: ${formattedDate}`, 100, 63);
       doc.text(`Reported on: ${formattedDate}`, 100, 70);
 
-      // Test Title
+      
       doc.setFontSize(16);
       doc.setFont("helvetica", "bold");
       doc.text("LABORATORY TEST REPORT", 84, 103);
 
-      // Test Results Section
+      
       doc.setFontSize(12);
       doc.setTextColor(0, 0, 0);
       doc.text("Test Results:", 14, 110);
       
-      // Parse testData if it's a string
+      
       let testDataArray = [];
       try {
         testDataArray = typeof test.testData === 'string' 
@@ -151,7 +151,7 @@ const ViewTestPage = () => {
         doc.text(typeof test.testData === 'string' ? test.testData : "No structured data available", 14, 120);
       }
 
-      // Footer Section
+      
       const finalY = Array.isArray(testDataArray) && testDataArray.length > 0 
         ? doc.lastAutoTable.finalY + 20 
         : 130;
@@ -167,7 +167,7 @@ const ViewTestPage = () => {
       doc.text("Dr. Menaka Ambepitiya", 140, finalY + 20);
       doc.text("(MD, Pathologist)", 140, finalY + 25);
 
-      // Footer bottom
+      
       doc.setFontSize(9);
       const generatedDate = new Date().toLocaleString("en-US", {
         day: "2-digit",
@@ -181,7 +181,7 @@ const ViewTestPage = () => {
       doc.text("Page 1 of 1", 180, 280);
       doc.text("Sample Collection 0123456789", 105, 280, { align: "center" });
 
-      // Save the PDF
+      
       doc.save(`Lab_Test_Report_${test.name.replace(/\s+/g, '_')}.pdf`);
       toast.success("PDF report downloaded successfully!");
     } catch (error) {
@@ -218,13 +218,13 @@ const ViewTestPage = () => {
   return (
     <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen p-4 md:p-8">
       <div className="bg-white rounded-xl shadow-lg overflow-hidden max-w-4xl mx-auto">
-        {/* Header */}
+        {}
         <div className="bg-blue-900 p-6 text-white">
           <h1 className="text-2xl md:text-3xl font-bold text-center">Laboratory Test Report</h1>
           <p className="text-center text-blue-100 mt-1">Detailed Patient Test Information</p>
         </div>
 
-        {/* Patient Info Card */}
+        {}
         <div className="p-6 border-b border-gray-200">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
@@ -267,7 +267,7 @@ const ViewTestPage = () => {
           </div>
         </div>
 
-        {/* Test Data Section */}
+        {}
         <div className="p-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">Test Results</h3>
           
@@ -284,7 +284,7 @@ const ViewTestPage = () => {
           )}
         </div>
 
-        {/* Action Buttons */}
+        {}
         <div className="p-6 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row justify-center gap-4">
           <button
             onClick={downloadPDF}

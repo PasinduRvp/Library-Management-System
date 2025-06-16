@@ -51,16 +51,16 @@ const AllTestPage = () => {
     }
   }, [searchTerm, tests]);
 
-  // Get current tests for pagination
+  
   const indexOfLastTest = currentPage * testsPerPage;
   const indexOfFirstTest = indexOfLastTest - testsPerPage;
   const currentTests = filteredTests.slice(indexOfFirstTest, indexOfLastTest);
   const totalPages = Math.ceil(filteredTests.length / testsPerPage);
 
-  // Change page
+  
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // Format age display
+  
   const formatAge = (years, months) => {
     if (years === 0) {
       return `${months} month${months !== 1 ? 's' : ''}`;
@@ -71,13 +71,13 @@ const AllTestPage = () => {
     return `${years} year${years !== 1 ? 's' : ''} ${months} month${months !== 1 ? 's' : ''}`;
   };
 
-  // Calculate deletion time remaining (6 months)
+  
   const getDeletionStatus = (testDate) => {
     if (!testDate) return null;
     
     const now = new Date();
     const deletionTime = new Date(testDate);
-    deletionTime.setMonth(deletionTime.getMonth() + 6); // Add 6 months to test date
+    deletionTime.setMonth(deletionTime.getMonth() + 6); 
     
     const msPerDay = 1000 * 60 * 60 * 24;
     const daysLeft = Math.floor((deletionTime - now) / msPerDay);
@@ -87,7 +87,7 @@ const AllTestPage = () => {
         text: "Deleting soon",
         className: "bg-red-100 text-red-800"
       };
-    } else if (daysLeft <= 30) { // Last month
+    } else if (daysLeft <= 30) { 
       return {
         text: `Deleting in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}`,
         className: "bg-orange-100 text-orange-800"
@@ -299,15 +299,7 @@ const AllTestPage = () => {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                           </button>
-                          <button
-                            onClick={() => handleDeleteConfirmation(test._id)}
-                            className="text-red-600 hover:text-red-900 transition-colors flex items-center gap-1"
-                            title="Delete"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
+                          
                         </div>
                       </td>
                     </tr>
@@ -324,7 +316,7 @@ const AllTestPage = () => {
           </table>
         </div>
 
-        {/* Pagination */}
+        {}
         {filteredTests.length > testsPerPage && (
           <div className="flex items-center justify-between mt-4 px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
             <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">

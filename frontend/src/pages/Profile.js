@@ -2,15 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { MdModeEdit, MdLogout, MdSecurity, MdPerson, MdInfo, MdSchool, MdMedicalServices } from 'react-icons/md';
-import { FaUserShield, FaUserMd, FaUserGraduate, FaUserNurse, FaFlask, FaPills, FaUser } from 'react-icons/fa';
+import { FaUserShield, FaUserMd, FaUserGraduate, FaUserNurse, FaFlask, FaPills, FaUser, FaQrcode } from 'react-icons/fa';
 import SummaryApi from '../common';
 import ChangePassword from '../components/ChangePassword';
 import UpdateProfile from '../components/UpdateProfile';
+import QRCode from 'qrcode.react';
+import { QRCodeSVG } from 'qrcode.react';
 
 const Profile = () => {
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('personal');
+    const [qrCodeData, setQrCodeData] = useState('');
     const navigate = useNavigate();
 
     const fetchUserDetails = async () => {
@@ -23,6 +26,9 @@ const Profile = () => {
 
             if (dataResponse.success) {
                 setUserData(dataResponse.data);
+                // Generate QR code data URL for the patient
+                const patientUrl = `${window.location.origin}/patient/${dataResponse.data._id}`;
+                setQrCodeData(patientUrl);
             } else {
                 toast.error(dataResponse.message);
                 navigate('/login');
@@ -454,6 +460,49 @@ const Profile = () => {
                                 </div>
                             </div>
                         </div>
+
+                        {/* QR Code Section */}
+                        {userData.role === 'STUDENT' && qrCodeData && (
+                            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                                <div className="p-6">
+                                    <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                        <FaQrcode className="mr-2 text-blue-600" />
+                                        Medical QR Code
+                                    </h2>
+                                    <div className="flex flex-col items-center">
+                                        <div className="bg-white p-4 rounded-lg border border-gray-200 mb-3">
+                                            <QRCodeSVG
+                                                value={qrCodeData}
+                                                size={180}
+                                                level="H"
+                                                includeMargin={true}
+/>
+                                        </div>
+                                        <p className="text-sm text-gray-500 text-center">
+                                            Scan this code to access your medical records
+                                        </p>
+                                        <button 
+                                            onClick={() => {
+                                                // Create a temporary link to download the QR code
+                                                const canvas = document.querySelector("canvas");
+                                                const pngUrl = canvas
+                                                    .toDataURL("image/png")
+                                                    .replace("image/png", "image/octet-stream");
+                                                const downloadLink = document.createElement("a");
+                                                downloadLink.href = pngUrl;
+                                                downloadLink.download = `${userData.name}-medical-qr.png`;
+                                                document.body.appendChild(downloadLink);
+                                                downloadLink.click();
+                                                document.body.removeChild(downloadLink);
+                                            }}
+                                            className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                        >
+                                            Download QR Code
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
                             <div className="p-6">

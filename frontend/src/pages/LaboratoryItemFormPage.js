@@ -89,7 +89,7 @@ const LaboratoryItemFormPage = () => {
             <Toaster position="top-center" />
             <div className="max-w-md mx-auto">
                 <div className="bg-white shadow-xl rounded-lg overflow-hidden">
-                    {/* Form Header */}
+                    {}
                     <div className="bg-blue-600 py-6 px-8">
                         <div className="flex items-center justify-center space-x-3">
                             <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -104,17 +104,17 @@ const LaboratoryItemFormPage = () => {
                         </p>
                     </div>
 
-                    {/* Form Content */}
+                    {}
                     <div className="p-6 sm:p-8">
                         <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* Item Information Section */}
+                            {}
                             <div className="space-y-6">
                                 <h3 className="text-lg font-medium text-blue-800 border-b border-blue-200 pb-2">
                                     Item Information
                                 </h3>
                                 
                                 <div className="grid grid-cols-1 gap-6">
-                                    {/* Item Name */}
+                                    {}
                                     <div>
                                         <label htmlFor="itemName" className="block text-sm font-medium text-gray-700 mb-1">
                                             Item Name <span className="text-red-500">*</span>
@@ -139,7 +139,7 @@ const LaboratoryItemFormPage = () => {
                                         {errors.itemName && <p className="mt-1 text-sm text-red-600">{errors.itemName}</p>}
                                     </div>
 
-                                    {/* Item Quantity */}
+                                    {}
                                     <div>
                                         <label htmlFor="itemCount" className="block text-sm font-medium text-gray-700 mb-1">
                                             Quantity <span className="text-red-500">*</span>
@@ -166,7 +166,7 @@ const LaboratoryItemFormPage = () => {
                                 </div>
                             </div>
 
-                            {/* Form Actions */}
+                            {}
                             <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6">
                                 <button
                                     type="button"

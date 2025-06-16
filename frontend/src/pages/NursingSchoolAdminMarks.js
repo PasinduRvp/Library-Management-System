@@ -78,11 +78,8 @@ const MarkAllocationAdmin = () => {
     }
   }, [searchTerm, marks]);
 
-  const isDuplicateMark = (testName, studentNumber) => {
-    return marks.some(mark => 
-      mark.testName === testName && 
-      mark.studentNumber === studentNumber
-    );
+  const isDuplicateMark = (studentNumber) => {
+    return marks.some(mark => mark.studentNumber === studentNumber);
   };
 
   const handleStudentNumberChange = (e) => {
@@ -134,8 +131,8 @@ const MarkAllocationAdmin = () => {
       return toast.error("Please fill in all fields!");
     }
 
-    if (isDuplicateMark(newMark.testName, newMark.studentNumber)) {
-      return toast.error("This student already has marks for this test!");
+    if (isDuplicateMark(newMark.studentNumber)) {
+      return toast.error("This student already has marks allocated!");
     }
 
     try {
@@ -171,13 +168,12 @@ const MarkAllocationAdmin = () => {
     }
 
     const isDuplicate = marks.some(mark => 
-      mark.testName === selectedMark.testName && 
       mark.studentNumber === selectedMark.studentNumber &&
       mark._id !== selectedMark._id
     );
 
     if (isDuplicate) {
-      return toast.error("This student already has marks for this test!");
+      return toast.error("This student already has marks allocated!");
     }
 
     try {
