@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { MdSearch, MdDownload } from "react-icons/md";
+import { MdSearch, MdVisibility, MdClose, MdZoomOut, MdZoomIn } from "react-icons/md";
 import { motion } from "framer-motion";
 import SummaryApi from "../common";
 
@@ -10,6 +10,10 @@ const EBooksLibrary = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [bookContent, setBookContent] = useState("");
+  const [isBookLoading, setIsBookLoading] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
 
   const categories = [
     "All",
@@ -74,32 +78,56 @@ const EBooksLibrary = () => {
     setFilteredEBooks(filtered);
   };
 
-  const handleDownload = async (ebookId, ebookName) => {
+  const handleViewBook = async (ebook) => {
     try {
-      const response = await fetch(SummaryApi.downloadEBook.url(ebookId), {
-        method: SummaryApi.downloadEBook.method,
+      setIsBookLoading(true);
+      setSelectedBook(ebook);
+      setZoomLevel(1); // Reset zoom level when opening new book
+      
+      // Fetch book content for viewing
+      const response = await fetch(SummaryApi.viewEBook.url(ebook._id), {
+        method: SummaryApi.viewEBook.method,
         credentials: "include",
       });
 
       if (!response.ok) {
-        throw new Error("Download failed");
+        throw new Error("Failed to load book content");
       }
 
+      // For PDF files, create a blob URL for PDF viewing
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.style.display = "none";
-      a.href = url;
-      a.download = `${ebookName}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      const pdfUrl = URL.createObjectURL(blob);
+      setBookContent(pdfUrl);
 
-      toast.success("Download started successfully!");
+      toast.success("Book opened successfully!");
     } catch (error) {
-      toast.error("Error downloading e-book");
+      toast.error("Error opening e-book");
+      setSelectedBook(null);
+    } finally {
+      setIsBookLoading(false);
     }
+  };
+
+  const closeBookViewer = () => {
+    setSelectedBook(null);
+    setBookContent("");
+    setZoomLevel(1);
+    // Clean up blob URL if it was created
+    if (bookContent && bookContent.startsWith("blob:")) {
+      URL.revokeObjectURL(bookContent);
+    }
+  };
+
+  const zoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 0.1, 2)); // Max zoom 200%
+  };
+
+  const zoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 0.1, 0.5)); // Min zoom 50%
+  };
+
+  const resetZoom = () => {
+    setZoomLevel(1);
   };
 
   return (
@@ -112,7 +140,7 @@ const EBooksLibrary = () => {
               E-Books Library
             </h1>
             <p className="text-gray-600">
-              Discover and download our digital collection
+              Discover and read our digital collection
             </p>
           </div>
         </div>
@@ -168,7 +196,7 @@ const EBooksLibrary = () => {
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.target.src =
-                        "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9rZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRkZDN0YwIi8+CjxwYXRoIGQ9Ik01MCA1MEgxNTBWMTUwSDUwVjUwWiIgZmlsbD0iI0ZBOEUwMCIvPgo8cGF0aCBkPSJNNzUgNzVIMTI1VjEyNUg3NVY3NVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPg==";
+                        "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRkZDN0YwIi8+CjxwYXRoIGQ9Ik01MCA1MEgxNTBWMTUwSDUwVjUwWiIgZmlsbD0iI0ZBOEUwMCIvPgo8cGF0aCBkPSJNNzUgNzVIMTI1VjEyNUg3NVY3NVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPg==";
                     }}
                   />
                 </div>
@@ -196,16 +224,16 @@ const EBooksLibrary = () => {
 
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500 text-xs">
-                      {ebook.downloads} downloads
+                      {ebook.views || 0} views
                     </span>
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => handleDownload(ebook._id, ebook.name)}
+                      onClick={() => handleViewBook(ebook)}
                       className="bg-amber-600 text-white px-3 py-1 rounded-lg text-xs flex items-center gap-1 hover:bg-amber-700 transition-all"
                     >
-                      <MdDownload className="text-sm" />
-                      Download
+                      <MdVisibility className="text-sm" />
+                      Read
                     </motion.button>
                   </div>
                 </div>
@@ -226,6 +254,116 @@ const EBooksLibrary = () => {
           </div>
         )}
       </div>
+
+      {/* Book Viewer Modal - LARGER SIZE */}
+      {selectedBook && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl h-[95vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
+              <div className="flex-1 min-w-0">
+                <h2 className="text-2xl font-bold text-gray-800 truncate">
+                  {selectedBook.name}
+                </h2>
+                <p className="text-gray-600 text-lg">by {selectedBook.author}</p>
+              </div>
+              
+              {/* Zoom Controls */}
+              <div className="flex items-center gap-3 mx-4">
+                <button
+                  onClick={zoomOut}
+                  className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  title="Zoom Out"
+                >
+                  <MdZoomOut className="text-xl text-gray-700" />
+                </button>
+                <span className="text-sm font-medium text-gray-700 min-w-[50px] text-center">
+                  {Math.round(zoomLevel * 100)}%
+                </span>
+                <button
+                  onClick={zoomIn}
+                  className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  title="Zoom In"
+                >
+                  <MdZoomIn className="text-xl text-gray-700" />
+                </button>
+                <button
+                  onClick={resetZoom}
+                  className="p-2 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition-colors text-sm font-medium"
+                >
+                  Reset
+                </button>
+              </div>
+
+              <button
+                onClick={closeBookViewer}
+                className="p-3 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <MdClose className="text-2xl text-gray-600" />
+              </button>
+            </div>
+
+            {/* Modal Content - MUCH LARGER */}
+            <div className="flex-1 overflow-hidden relative">
+              {isBookLoading ? (
+                <div className="flex justify-center items-center h-full">
+                  <div className="animate-spin rounded-full h-20 w-20 border-t-2 border-b-2 border-amber-500"></div>
+                </div>
+              ) : bookContent ? (
+                <div className="h-full w-full overflow-auto bg-gray-100">
+                  <div 
+                    className="flex justify-center items-start p-8 min-h-full"
+                    style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'center top' }}
+                  >
+                    <iframe
+                      src={bookContent}
+                      className="w-full max-w-4xl h-[80vh] border-0 shadow-2xl rounded-lg bg-white"
+                      title={`${selectedBook.name} - PDF Viewer`}
+                      style={{ 
+                        minHeight: '800px',
+                        width: '100%',
+                        maxWidth: '1200px'
+                      }}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="flex justify-center items-center h-full">
+                  <div className="text-center">
+                    <div className="text-6xl mb-4">📖</div>
+                    <p className="text-gray-600 text-xl">Unable to load book content</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl flex-shrink-0">
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <div className="flex items-center gap-6 text-base">
+                  <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full">
+                    📚 {selectedBook.category}
+                  </span>
+                  <span>📄 {selectedBook.pageCount} pages</span>
+                  <span>👁️ {selectedBook.views || 0} views</span>
+                  <span>🔍 {selectedBook.isbn}</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-gray-500">
+                    Use zoom controls to adjust viewing size
+                  </span>
+                  <button
+                    onClick={closeBookViewer}
+                    className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors text-base"
+                  >
+                    Close Viewer
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

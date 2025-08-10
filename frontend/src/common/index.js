@@ -240,6 +240,7 @@ const SummaryApi = {
     url: (id) => `${backendDomain}/api/e-books/${id}`,
     method: "PUT",
   },
+  
   deleteEBook: {
     url: (id) => `${backendDomain}/api/e-books/${id}`,
     method: "DELETE",

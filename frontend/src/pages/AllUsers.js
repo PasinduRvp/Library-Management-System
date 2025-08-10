@@ -9,8 +9,7 @@ import { motion } from "framer-motion";
 import { IoMdAdd } from "react-icons/io";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import defaultProfilePic from '../assest/loginIcon.jpg';
-import { FaIdCard, FaUserShield, FaUser } from "react-icons/fa";
+import { FaIdCard, FaUserShield, FaUser, FaMoneyBillWave } from "react-icons/fa";
 
 const AllUsers = () => {
   const [allUser, setAllUsers] = useState([]);
@@ -125,8 +124,10 @@ const AllUsers = () => {
 
       // User Statistics
       const userRoles = {};
+      let totalFines = 0;
       filteredUsers.forEach(user => {
         userRoles[user.role] = (userRoles[user.role] || 0) + 1;
+        totalFines += user.fines || 0;
       });
 
       let yPos = 75;
@@ -141,20 +142,26 @@ const AllUsers = () => {
         yPos += 7;
       });
 
-      // User Table
+      // Fines Statistics
+      yPos += 5;
+      doc.setFont("helvetica", "bold");
+      doc.text(`Total Outstanding Fines: Rs. ${totalFines.toFixed(2)}`, 20, yPos);
       yPos += 10;
+
+      // User Table
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
       doc.text("User Details", 14, yPos);
       yPos += 10;
 
-      const tableColumns = ["#", "Name", "Email", "Reg Number", "Role", "Joined Date"];
+      const tableColumns = ["#", "Name", "Email", "Reg Number", "Role", "Fines (Rs.)", "Joined Date"];
       const tableRows = filteredUsers.map((user, index) => [
         index + 1,
         user.name,
         user.email,
         user.registrationNumber || 'N/A',
         user.role,
+        (user.fines || 0).toFixed(2),
         moment(user.createdAt).format("LL")
       ]);
 
@@ -170,11 +177,12 @@ const AllUsers = () => {
         },
         columnStyles: {
           0: { cellWidth: 8, halign: 'center' },
-          1: { cellWidth: 35 },
-          2: { cellWidth: 45 },
+          1: { cellWidth: 30 },
+          2: { cellWidth: 40 },
           3: { cellWidth: 25, halign: 'center' },
           4: { cellWidth: 20, halign: 'center' },
-          5: { cellWidth: 30, halign: 'center' }
+          5: { cellWidth: 20, halign: 'center' },
+          6: { cellWidth: 30, halign: 'center' }
         },
         alternateRowStyles: { fillColor: [254, 243, 199] },
         margin: { left: 14 }
@@ -250,6 +258,12 @@ const AllUsers = () => {
         className: "shadow-xl rounded-xl"
       }
     );
+  };
+
+  const getFineColor = (amount) => {
+    if (amount === 0) return "text-green-600 bg-green-100";
+    if (amount <= 30) return "text-amber-600 bg-amber-100";
+    return "text-red-600 bg-red-100";
   };
 
   return (
@@ -333,6 +347,12 @@ const AllUsers = () => {
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                     Joined Date
                   </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                    <div className="flex items-center">
+                      <FaMoneyBillWave className="mr-1" />
+                      Fines (Rs.)
+                    </div>
+                  </th>
                   <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">
                     Actions
                   </th>
@@ -385,8 +405,14 @@ const AllUsers = () => {
                           </span>
                         </div>
                       </td>
+                      
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {moment(user?.createdAt).format("LL")}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getFineColor(user?.fines || 0)}`}>
+                          Rs. {(user?.fines || 0).toFixed(2)}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                         <motion.button
@@ -415,7 +441,7 @@ const AllUsers = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="8" className="px-6 py-4 text-center text-sm text-gray-500">
+                    <td colSpan="9" className="px-6 py-4 text-center text-sm text-gray-500">
                       {searchQuery ? "No users match your search." : "No users available."}
                     </td>
                   </tr>
