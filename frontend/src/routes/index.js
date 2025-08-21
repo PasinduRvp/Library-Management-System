@@ -6,30 +6,6 @@ import ForgotPassword from '../pages/ForgotPassword'
 import SignUp from '../pages/SignUp'
 import AdminPanel from '../pages/AdminPanel'
 import AllUsers from '../pages/AllUsers'
-import Resources from '../pages/Resources'
-import NursingSchoolAdmin from '../pages/NursingSchoolAdmin'
-import AllChannelingAppointments from '../pages/AllChannelingAppointments'
-import AllHomeVisitAppointments from '../pages/AllHomeVisitAppointments'
-import AllGeneralNotices from '../pages/AllGeneralNotices'
-import NursingSchool from '../pages/NursingSchool'
-import PharmacyPanel from '../pages/PharmacyLabPanel'
-import LaboratoryItemFormPage from '../pages/LaboratoryItemFormPage'
-import AllItemsPage from '../pages/AllItemsPage'
-import EditItemPage from '../pages/EditItemPage'
-import AllStockPage from '../pages/AllStockPage'
-import EditStockPage from '../pages/EditStockPage'
-import LaboratoryTestForm from '../pages/LaboratoryTestForm'
-import AllTestPage from '../pages/AllTestPage'
-import EditTestPage from '../pages/EditTestPage'
-import ViewTestPage from '../pages/ViewTestPage'
-import PharmacyStockFormPage from '../pages/PharmacyStockForm'
-import PharmacyLabPanel from '../pages/PharmacyLabPanel'
-import CourseMaterials from '../components/CourseMaterials'
-import MarkAllocationAdmin from '../pages/NursingSchoolAdminMarks'
-import NursingSchoolAdminCourseMaterials from '../pages/NursingSchoolAdminCourseMaterials'
-import AddChannelingAppointment from '../components/AddChannelingAppointment'
-import OnlineConsultationPage from '../pages/OnlineConsultationPage'
-import MarkAllocationStudent from '../pages/NursingSchoolMarks'
 import Profile from '../pages/Profile'
 import BookCollection from '../pages/BookCollectionForm'
 import BookManagement from '../pages/BookManager'
@@ -83,11 +59,6 @@ const router = createBrowserRouter([
                 path: "my-reservations",
                 element: <UserReservations/>
             },
-            
-            {
-                path : "all-onlineConsultations",
-                element : <OnlineConsultationPage/>
-            },
             {
                 path : "profile",
                 element :  <Profile/>
@@ -101,40 +72,12 @@ const router = createBrowserRouter([
                         element : <AllUsers/>
                     },
                     {
-                        path : "Resuorces",
-                        element : <Resources/>
-                    }, 
-                    {
                         path: "admin-reservations",
                         element: <AdminReservations/>
                     },
                     {
                         path: "membership-management",
                         element: <PendingMemberships/>
-                    },
-                    {
-                        path : "all-channelings",
-                        element : <AllChannelingAppointments/>
-                    },
-                    {
-                        path : "Nursing-School",
-                        element : <NursingSchoolAdmin/>,
-                    },
-                    {
-                        path : "all-homevisits",
-                        element : <AllHomeVisitAppointments/>
-                    },
-                    {
-                        path : "all-generalnotices",
-                        element : <AllGeneralNotices/>
-                    },
-                    {
-                        path : "marks-allocation",
-                        element : <MarkAllocationAdmin/>
-                    },
-                    {
-                        path : "admin-course-materials",
-                        element : <NursingSchoolAdminCourseMaterials/>
                     },
                     {
                         path : "book-management",
@@ -148,78 +91,7 @@ const router = createBrowserRouter([
                     
                 ]
             },
-            {
-                path : "all-homevisits",
-                element : <AllHomeVisitAppointments/>
-            },
-            {
-                path : "all-generalnotices",
-                element : <AllGeneralNotices/>
-            },
-            {
-                path : "nursing-school",
-                element : <NursingSchool/>
-            },
-            {
-                path : "course-materials",
-                element : <CourseMaterials/>
-            },
-            {
-                path : "pharmacy-lab-panel",
-                element : <PharmacyLabPanel/>,
-                children : [
-                    {
-                        path : "lab-itemiform",
-                        element : <LaboratoryItemFormPage/>
-                    },
-                    {
-                        path: "all-items",
-                        element: <AllItemsPage/>
-                    },
-                    {
-                        path: "edit-item/:id",
-                        element: <EditItemPage/>
-                    },
-                    {
-                        path : "pharmacy-stockform",
-                        element : <PharmacyStockFormPage/>
-                    },
-                    {
-                        path: "all-stocks",
-                        element: <AllStockPage/>
-                    },
-                    {
-                        path: "edit-stock/:id",
-                        element: <EditStockPage/>
-                    },
-                    {
-                        path : "lab-testform",
-                        element : <LaboratoryTestForm/>
-                    },
-                    {
-                        path : "all-tests",
-                        element : <AllTestPage/>
-                    },
-                    {
-                        path: "edit-test/:id",
-                        element: <EditTestPage/>
-                    },
-                    {
-                        path :"view-test/:id",
-                        element : <ViewTestPage/>
-                    }
-                    
-        
-                ]
-            },
-            {
-                path :"edit-test/:id",
-                element : <ViewTestPage/>
-            },
-            {
-                path :"student-marks",
-                element : <MarkAllocationStudent/>
-            },
+            
         ]
     }
 ])
