@@ -47,8 +47,8 @@ const AboutUs = () => {
               </p>
               <p className="text-gray-700 mb-4">
                 Our journey has been guided by the belief that books have the power to transform lives, 
-                bridge communities, and spark innovation. We've witnessed countless stories of personal 
-                growth, academic achievement, and community connection that began within our walls.
+                bridge communities, and spark innovation. We've witnessed countless stories of Personal 
+                growth, Academic achievement, and Community connection that began within our walls.
               </p>
               <p className="text-gray-700">
                 Today, BookNest stands as a testament to what a community can achieve when it values 
