@@ -1,20 +1,32 @@
+// Profile.js - COMPLETE UPDATED VERSION
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { MdModeEdit, MdLogout, MdSecurity, MdPerson, MdInfo, MdSchool, MdMedicalServices } from 'react-icons/md';
-import { FaUserShield, FaUserMd, FaUserGraduate, FaUserNurse, FaFlask, FaPills, FaUser, FaQrcode } from 'react-icons/fa';
+import { 
+  MdModeEdit, MdLogout, MdSecurity, MdPerson, MdInfo, MdSave, 
+  MdCancel, MdCameraAlt, MdPayment, MdHistory, MdQrCode 
+} from 'react-icons/md';
+import { FaUserShield, FaUser, FaIdCard, FaEnvelope, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
+import { QRCodeSVG } from 'qrcode.react';
 import SummaryApi from '../common';
 import ChangePassword from '../components/ChangePassword';
-import UpdateProfile from '../components/UpdateProfile';
-import QRCode from 'qrcode.react';
-import { QRCodeSVG } from 'qrcode.react';
+import imageTobase64 from '../helpers/imageTobase64';
 
 const Profile = () => {
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('personal');
-    const [qrCodeData, setQrCodeData] = useState('');
+    const [isEditing, setIsEditing] = useState(false);
+    const [editData, setEditData] = useState({});
+    const [isSaving, setIsSaving] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const [membershipSlip, setMembershipSlip] = useState(null);
+    const [showQRCode, setShowQRCode] = useState(false);
     const navigate = useNavigate();
+
+    const getDefaultProfilePic = (name = 'User') => {
+        return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=128`;
+    };
 
     const fetchUserDetails = async () => {
         try {
@@ -25,15 +37,19 @@ const Profile = () => {
             const dataResponse = await response.json();
 
             if (dataResponse.success) {
+                console.log("User data fetched:", {
+                    name: dataResponse.data.name,
+                    membershipStatus: dataResponse.data.membershipStatus,
+                    hasPaymentSlip: !!dataResponse.data.membershipPayment?.slipImage
+                });
                 setUserData(dataResponse.data);
-                // Generate QR code data URL for the patient
-                const patientUrl = `${window.location.origin}/patient/${dataResponse.data._id}`;
-                setQrCodeData(patientUrl);
+                setEditData(dataResponse.data);
             } else {
                 toast.error(dataResponse.message);
                 navigate('/login');
             }
         } catch (error) {
+            console.error("Error fetching user details:", error);
             toast.error("Error fetching user details");
         } finally {
             setLoading(false);
@@ -59,6 +75,180 @@ const Profile = () => {
         }
     };
 
+    const showLogoutConfirmation = () => {
+        toast.info(
+            <div className="p-4">
+                <p className="text-gray-800 font-medium text-lg mb-4 text-center">Are you sure you want to logout?</p>
+                <div className="flex justify-center gap-3">
+                    <button
+                        onClick={() => {
+                            handleLogout();
+                            toast.dismiss();
+                        }}
+                        className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg transition-colors shadow-md"
+                    >
+                        Yes, Logout
+                    </button>
+                    <button
+                        onClick={() => {
+                            toast.dismiss();
+                            toast.info('Logout cancelled');
+                        }}
+                        className="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded-lg transition-colors shadow-md"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>,
+            {
+                position: "top-center",
+                autoClose: false,
+                closeOnClick: false,
+                draggable: false,
+                className: "shadow-xl rounded-xl"
+            }
+        );
+    };
+
+    const handleEditToggle = () => {
+        if (isEditing) {
+            setEditData(userData);
+        }
+        setIsEditing(!isEditing);
+    };
+
+    const handleEditChange = (field, value) => {
+        setEditData(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
+    const handleProfilePicUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const imagePic = await imageTobase64(file);
+            setEditData(prev => ({
+                ...prev,
+                profilePic: imagePic
+            }));
+            toast.success("Profile picture uploaded successfully");
+        } catch (error) {
+            toast.error(error.message || "Failed to upload image");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            const response = await fetch(SummaryApi.updateUser.url, {
+                method: SummaryApi.updateUser.method,
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userId: userData._id,
+                    name: editData.name,
+                    email: editData.email,
+                    profilePic: editData.profilePic,
+                    contactNumber: editData.contactNumber,
+                    address: editData.address
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setUserData(data.data);
+                setIsEditing(false);
+                toast.success("Profile updated successfully!");
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error("Error updating profile");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    // FIXED: Membership slip upload with better debugging
+    const handleMembershipSlipUpload = async (e) => {
+        e.preventDefault();
+        
+        console.log("=== FRONTEND: MEMBERSHIP SLIP UPLOAD ===");
+        console.log("File selected:", membershipSlip);
+        console.log("Current user status:", userData?.membershipStatus);
+        
+        if (!membershipSlip) {
+            return toast.error("Please select a payment slip");
+        }
+
+        setIsUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append("slipImage", membershipSlip);
+            
+            // Set expiry date to 1 year from now
+            const expiryDate = new Date();
+            expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+            formData.append("expiryDate", expiryDate.toISOString().split('T')[0]);
+
+            console.log("Uploading to:", SummaryApi.uploadMembershipSlip.url);
+            console.log("File name:", membershipSlip.name);
+            console.log("File size:", membershipSlip.size);
+
+            const response = await fetch(SummaryApi.uploadMembershipSlip.url, {
+                method: SummaryApi.uploadMembershipSlip.method,
+                credentials: 'include',
+                body: formData
+            });
+
+            console.log("Upload response status:", response.status);
+            
+            const data = await response.json();
+            console.log("Upload response data:", data);
+            
+            if (data.success) {
+                toast.success("Membership payment slip uploaded successfully! Please wait for admin approval.");
+                setMembershipSlip(null);
+                
+                // Force refresh user data
+                setTimeout(() => {
+                    fetchUserDetails();
+                }, 1000);
+            } else {
+                toast.error(data.message || "Failed to upload membership slip");
+            }
+        } catch (error) {
+            console.error("Upload error:", error);
+            toast.error("Error uploading membership slip: " + error.message);
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const generateQRData = () => {
+        if (!userData) return '';
+        
+        return JSON.stringify({
+            userId: userData._id,
+            name: userData.name,
+            email: userData.email,
+            registrationNumber: userData.registrationNumber,
+            membershipStatus: userData.membershipStatus,
+            membershipExpiry: userData.membershipExpiry,
+            fines: userData.fines || 0,
+            contactNumber: userData.contactNumber
+        });
+    };
+
     useEffect(() => {
         fetchUserDetails();
     }, []);
@@ -68,18 +258,8 @@ const Profile = () => {
         switch(userData?.role) {
             case 'ADMIN':
                 return <FaUserShield className={`${iconClass} bg-purple-600 text-purple-600`} />;
-            case 'DOCTOR':
-                return <FaUserMd className={`${iconClass} bg-blue-600 text-blue-600`} />;
-            case 'STUDENT':
-                return <FaUserGraduate className={`${iconClass} bg-green-600 text-green-600`} />;
-            case 'NURSE':
-                return <FaUserNurse className={`${iconClass} bg-pink-600 text-pink-600`} />;
-            case 'PHARMACY':
-                return <FaPills className={`${iconClass} bg-yellow-600 text-yellow-600`} />;
-            case 'LABORATORY':
-                return <FaFlask className={`${iconClass} bg-red-600 text-red-600`} />;
             default:
-                return <FaUser className={`${iconClass} bg-gray-600 text-gray-600`} />;
+                return <FaUser className={`${iconClass} bg-amber-600 text-amber-600`} />;
         }
     };
 
@@ -88,38 +268,44 @@ const Profile = () => {
         switch(userData?.role) {
             case 'ADMIN':
                 return <span className={`${baseClasses} bg-purple-100 text-purple-800`}>ADMINISTRATOR</span>;
-            case 'DOCTOR':
-                return <span className={`${baseClasses} bg-blue-100 text-blue-800`}>DOCTOR</span>;
-            case 'STUDENT':
-                return <span className={`${baseClasses} bg-green-100 text-green-800`}>MEDICAL STUDENT</span>;
-            case 'NURSE':
-                return <span className={`${baseClasses} bg-pink-100 text-pink-800`}>NURSE</span>;
-            case 'PHARMACY':
-                return <span className={`${baseClasses} bg-yellow-100 text-yellow-800`}>PHARMACIST</span>;
-            case 'LABORATORY':
-                return <span className={`${baseClasses} bg-red-100 text-red-800`}>LAB TECHNICIAN</span>;
             default:
-                return <span className={`${baseClasses} bg-gray-100 text-gray-800`}>STAFF MEMBER</span>;
+                return <span className={`${baseClasses} bg-amber-100 text-amber-800`}>MEMBER</span>;
+        }
+    };
+
+    const getMembershipBadge = () => {
+        const baseClasses = "px-3 py-1 rounded-full text-xs font-semibold shadow-sm";
+        switch(userData?.membershipStatus) {
+            case 'ACTIVE':
+                return <span className={`${baseClasses} bg-green-100 text-green-800`}>ACTIVE MEMBER</span>;
+            case 'PENDING':
+                return <span className={`${baseClasses} bg-amber-100 text-amber-800`}>PENDING APPROVAL</span>;
+            case 'EXPIRED':
+                return <span className={`${baseClasses} bg-red-100 text-red-800`}>MEMBERSHIP EXPIRED</span>;
+            case 'SUSPENDED':
+                return <span className={`${baseClasses} bg-red-100 text-red-800`}>SUSPENDED</span>;
+            default:
+                return <span className={`${baseClasses} bg-gray-100 text-gray-800`}>NOT REGISTERED</span>;
         }
     };
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">
-                <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-amber-50 to-amber-100">
+                <div className="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
         );
     }
 
     if (!userData) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">
+            <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-amber-50 to-amber-100">
                 <div className="text-center p-6 bg-white rounded-xl shadow-lg max-w-md mx-4">
                     <h2 className="text-xl font-semibold text-gray-800 mb-4">User Not Found</h2>
                     <p className="text-gray-600 mb-6">Unable to load user profile details.</p>
                     <button
                         onClick={() => navigate('/login')}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-all shadow-md"
+                        className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2 rounded-lg transition-all shadow-md"
                     >
                         Back to Login
                     </button>
@@ -129,57 +315,138 @@ const Profile = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 p-4 md:p-8">
+        <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 p-4 md:p-8">
             <div className="max-w-6xl mx-auto">
+                
+
                 {/* Profile Header */}
                 <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-6">
-                    <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-6 md:p-8 text-white relative">
-                        <div className="absolute top-6 right-6 flex space-x-3">
+                    <div className="bg-gradient-to-r from-amber-600 to-amber-800 p-6 md:p-8 text-white relative">
+                        {/* Action Buttons - Top Right */}
+                        <div className="absolute top-4 right-4 md:top-6 md:right-6 flex items-center space-x-2">
                             <button
-                                onClick={() => setActiveTab('personal')}
-                                className="p-2 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 transition-all"
-                                title="Edit Profile"
+                                onClick={handleEditToggle}
+                                className="p-2 md:p-3 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 transition-all"
+                                title={isEditing ? "Cancel Editing" : "Edit Profile"}
                             >
-                                <MdModeEdit className="text-xl" />
+                                {isEditing ? <MdCancel className="text-lg md:text-xl" /> : <MdModeEdit className="text-lg md:text-xl" />}
                             </button>
                             <button
-                                onClick={handleLogout}
-                                className="p-2 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 transition-all"
+                                onClick={showLogoutConfirmation}
+                                className="p-2 md:p-3 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 transition-all"
                                 title="Logout"
                             >
-                                <MdLogout className="text-xl" />
+                                <MdLogout className="text-lg md:text-xl" />
                             </button>
                         </div>
                         
-                        <div className="flex flex-col md:flex-row items-center space-y-6 md:space-y-0 md:space-x-8">
-                            <div className="relative">
-                                <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center overflow-hidden border-4 border-white shadow-xl">
-                                    {userData.profilePic ? (
-                                        <img 
-                                            src={userData.profilePic} 
-                                            alt="Profile" 
-                                            className="w-full h-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="text-gray-300">
-                                            {getRoleIcon()}
-                                        </div>
+                        {/* Profile Info Section */}
+                        <div className="flex flex-col items-center space-y-6 md:flex-row md:space-y-0 md:space-x-8 md:items-start">
+                            {/* Profile Picture */}
+                            <div className="relative flex-shrink-0">
+                                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-white flex items-center justify-center overflow-hidden border-4 border-white shadow-xl">
+                                    <img 
+                                        src={editData.profilePic || userData.profilePic || getDefaultProfilePic(userData.name)} 
+                                        alt="Profile" 
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            e.target.src = getDefaultProfilePic(userData.name);
+                                            e.target.onerror = null;
+                                        }}
+                                    />
+                                    {isEditing && (
+                                        <>
+                                            <label className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
+                                                <MdCameraAlt className="text-xl md:text-2xl text-white" />
+                                                <input 
+                                                    type="file" 
+                                                    className="hidden" 
+                                                    onChange={handleProfilePicUpload}
+                                                    accept="image/*"
+                                                    disabled={isUploading}
+                                                />
+                                            </label>
+                                            {isUploading && (
+                                                <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
+                                                    <div className="animate-spin rounded-full h-6 w-6 md:h-8 md:w-8 border-b-2 border-white"></div>
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                 </div>
+                                {isEditing && (
+                                    <p className="text-xs text-amber-100 text-center mt-2 max-w-[120px]">
+                                        Click photo to change
+                                    </p>
+                                )}
                             </div>
-                            <div className="text-center md:text-left">
-                                <h1 className="text-3xl font-bold mb-2">{userData.name}</h1>
-                                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+
+                            {/* User Details */}
+                            <div className="flex-1 text-center md:text-left">
+                                <h1 className="text-2xl md:text-3xl font-bold mb-3">
+                                    {isEditing ? (
+                                        <input
+                                            type="text"
+                                            value={editData.name || ''}
+                                            onChange={(e) => handleEditChange('name', e.target.value)}
+                                            className="bg-white bg-opacity-20 text-white border border-white border-opacity-30 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white text-center md:text-left w-full max-w-xs"
+                                            placeholder="Enter your name"
+                                        />
+                                    ) : (
+                                        userData.name
+                                    )}
+                                </h1>
+
+                                {/* Badges */}
+                                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-4">
                                     {getRoleBadge()}
-                                    {userData.indexNumber && (
-                                        <span className="px-3 py-1 bg-white bg-opacity-20 text-white rounded-full text-xs font-medium">
-                                            ID: {userData.indexNumber}
+                                    {getMembershipBadge()}
+                                    {userData.registrationNumber && (
+                                        <span className="px-3 py-1 bg-white bg-opacity-20 text-white rounded-full text-xs font-medium flex items-center">
+                                            <FaIdCard className="mr-1" />
+                                            {userData.registrationNumber}
                                         </span>
                                     )}
                                 </div>
-                                <p className="mt-3 text-blue-100">{userData.email}</p>
+
+                                {/* Email */}
+                                <div className="flex items-center justify-center md:justify-start text-amber-100">
+                                    <FaEnvelope className="mr-2 flex-shrink-0" />
+                                    {isEditing ? (
+                                        <input
+                                            type="email"
+                                            value={editData.email || ''}
+                                            onChange={(e) => handleEditChange('email', e.target.value)}
+                                            className="bg-white bg-opacity-20 text-white border border-white border-opacity-30 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-white flex-1 max-w-xs"
+                                            placeholder="Enter your email"
+                                        />
+                                    ) : (
+                                        <span className="break-all">{userData.email}</span>
+                                    )}
+                                </div>
                             </div>
                         </div>
+
+                        {/* Edit Actions */}
+                        {isEditing && (
+                            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+                                <button
+                                    onClick={handleSave}
+                                    disabled={isSaving || isUploading}
+                                    className="w-full sm:w-auto bg-white text-amber-700 px-6 py-3 rounded-lg font-medium hover:bg-amber-50 transition-all disabled:opacity-50 flex items-center justify-center"
+                                >
+                                    <MdSave className="mr-2" />
+                                    {isSaving ? 'Saving...' : 'Save Changes'}
+                                </button>
+                                <button
+                                    onClick={handleEditToggle}
+                                    className="w-full sm:w-auto bg-white bg-opacity-20 text-white px-6 py-3 rounded-lg font-medium hover:bg-opacity-30 transition-all flex items-center justify-center"
+                                >
+                                    <MdCancel className="mr-2" />
+                                    Cancel
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* Navigation Tabs */}
@@ -187,237 +454,318 @@ const Profile = () => {
                         <div className="flex overflow-x-auto">
                             <button
                                 onClick={() => setActiveTab('personal')}
-                                className={`px-6 py-4 font-medium flex items-center space-x-2 ${activeTab === 'personal' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                className={`px-6 py-4 font-medium flex items-center justify-center space-x-2 whitespace-nowrap ${activeTab === 'personal' ? 'text-amber-600 border-b-2 border-amber-600' : 'text-gray-500 hover:text-gray-700'}`}
                             >
                                 <MdPerson className="text-lg" />
                                 <span>Personal</span>
                             </button>
                             <button
-                                onClick={() => setActiveTab('security')}
-                                className={`px-6 py-4 font-medium flex items-center space-x-2 ${activeTab === 'security' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                onClick={() => setActiveTab('membership')}
+                                className={`px-6 py-4 font-medium flex items-center justify-center space-x-2 whitespace-nowrap ${activeTab === 'membership' ? 'text-amber-600 border-b-2 border-amber-600' : 'text-gray-500 hover:text-gray-700'}`}
                             >
-                                <MdSecurity className="text-lg" />
-                                <span>Security</span>
+                                <MdPayment className="text-lg" />
+                                <span>Membership</span>
                             </button>
-                            {userData.role === 'STUDENT' && (
-                                <button
-                                    onClick={() => setActiveTab('academic')}
-                                    className={`px-6 py-4 font-medium flex items-center space-x-2 ${activeTab === 'academic' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                >
-                                    <MdSchool className="text-lg" />
-                                    <span>Academic</span>
-                                </button>
-                            )}
-                            {['DOCTOR', 'NURSE', 'PHARMACY', 'LABORATORY'].includes(userData.role) && (
-                                <button
-                                    onClick={() => setActiveTab('professional')}
-                                    className={`px-6 py-4 font-medium flex items-center space-x-2 ${activeTab === 'professional' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                >
-                                    <MdMedicalServices className="text-lg" />
-                                    <span>Professional</span>
-                                </button>
-                            )}
+                            <button
+                                onClick={() => setActiveTab('fines')}
+                                className={`px-6 py-4 font-medium flex items-center justify-center space-x-2 whitespace-nowrap ${activeTab === 'fines' ? 'text-amber-600 border-b-2 border-amber-600' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                <MdHistory className="text-lg" />
+                                <span>Fines & History</span>
+                            </button>
                         </div>
                     </div>
                 </div>
 
                 {/* Tab Content */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Main Content */}
-                    <div className="md:col-span-2">
+                    <div className="lg:col-span-2">
                         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
                             {activeTab === 'personal' && (
-                                <div className="p-6">
+                                <div className="p-4 md:p-6">
                                     <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-                                        <MdPerson className="mr-2 text-blue-600" />
+                                        <MdPerson className="mr-2 text-amber-600" />
                                         Personal Information
                                     </h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="bg-gray-50 p-5 rounded-xl">
-                                            <h3 className="text-sm font-medium text-gray-500 mb-3">BASIC DETAILS</h3>
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <p className="text-xs text-gray-400">Full Name</p>
-                                                    <p className="font-medium text-gray-800">{userData.name}</p>
+                                    
+                                    {/* Basic Details Section */}
+                                    <div className="grid grid-cols-1 gap-6">
+                                        <div className="bg-amber-50 p-4 md:p-5 rounded-xl border border-amber-200">
+                                            <h3 className="text-sm font-medium text-amber-700 mb-4 text-center md:text-left">BASIC DETAILS</h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="text-center md:text-left">
+                                                    <p className="text-xs text-amber-600 mb-1">Full Name</p>
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="text"
+                                                            value={editData.name || ''}
+                                                            onChange={(e) => handleEditChange('name', e.target.value)}
+                                                            className="w-full p-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                                        />
+                                                    ) : (
+                                                        <p className="font-medium text-gray-800 break-words">{userData.name}</p>
+                                                    )}
                                                 </div>
-                                                <div>
-                                                    <p className="text-xs text-gray-400">Email Address</p>
-                                                    <p className="font-medium text-gray-800">{userData.email}</p>
+                                                
+                                                <div className="text-center md:text-left">
+                                                    <p className="text-xs text-amber-600 mb-1">Email Address</p>
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="email"
+                                                            value={editData.email || ''}
+                                                            onChange={(e) => handleEditChange('email', e.target.value)}
+                                                            className="w-full p-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                                        />
+                                                    ) : (
+                                                        <p className="font-medium text-gray-800 break-all">{userData.email}</p>
+                                                    )}
+                                                </div>
+                                                
+                                                <div className="text-center md:text-left">
+                                                    <p className="text-xs text-amber-600 mb-1">Contact Number</p>
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="tel"
+                                                            value={editData.contactNumber || ''}
+                                                            onChange={(e) => handleEditChange('contactNumber', e.target.value)}
+                                                            className="w-full p-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                                            placeholder="Enter contact number"
+                                                        />
+                                                    ) : (
+                                                        <p className="font-medium text-gray-800">
+                                                            {userData.contactNumber || 'Not provided'}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                
+                                                <div className="text-center md:text-left">
+                                                    <p className="text-xs text-amber-600 mb-1">Registration Number</p>
+                                                    <p className="font-medium text-gray-800">
+                                                        {userData.registrationNumber || 'Pending'}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="bg-gray-50 p-5 rounded-xl">
-                                            <h3 className="text-sm font-medium text-gray-500 mb-3">ACCOUNT INFORMATION</h3>
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <p className="text-xs text-gray-400">Account Created</p>
+                                        
+                                        {/* Address Section */}
+                                        <div className="bg-amber-50 p-4 md:p-5 rounded-xl border border-amber-200">
+                                            <h3 className="text-sm font-medium text-amber-700 mb-4 text-center md:text-left">ADDRESS</h3>
+                                            <div className="text-center md:text-left">
+                                                <p className="text-xs text-amber-600 mb-1">Full Address</p>
+                                                {isEditing ? (
+                                                    <textarea
+                                                        value={editData.address || ''}
+                                                        onChange={(e) => handleEditChange('address', e.target.value)}
+                                                        className="w-full p-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                                        rows="3"
+                                                        placeholder="Enter your address"
+                                                    />
+                                                ) : (
                                                     <p className="font-medium text-gray-800">
-                                                        {new Date(userData.createdAt).toLocaleDateString('en-US', {
-                                                            year: 'numeric',
-                                                            month: 'long',
-                                                            day: 'numeric'
-                                                        })}
+                                                        {userData.address || 'Not provided'}
                                                     </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-gray-400">Last Active</p>
-                                                    <p className="font-medium text-gray-800">
-                                                        {new Date().toLocaleDateString('en-US', {
-                                                            month: 'short',
-                                                            day: 'numeric',
-                                                            hour: '2-digit',
-                                                            minute: '2-digit'
-                                                        })}
-                                                    </p>
-                                                </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             )}
 
-                            {activeTab === 'security' && (
-                                <div className="p-6">
+                            {activeTab === 'membership' && (
+                                <div className="p-4 md:p-6">
                                     <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-                                        <MdSecurity className="mr-2 text-blue-600" />
-                                        Account Security
+                                        <MdPayment className="mr-2 text-amber-600" />
+                                        Membership Information
                                     </h2>
-                                    <div className="bg-gray-50 p-5 rounded-xl">
-                                        <div className="space-y-6">
-                                            <div>
-                                                <h3 className="text-sm font-medium text-gray-500 mb-2">PASSWORD</h3>
-                                                <p className="text-gray-800 mb-4">Last changed 3 months ago</p>
-                                                <button
-                                                    onClick={() => document.getElementById('changePasswordModal').showModal()}
-                                                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all shadow-sm"
-                                                >
-                                                    Change Password
-                                                </button>
-                                            </div>
-                                            <div className="border-t pt-4">
-                                                <h3 className="text-sm font-medium text-gray-500 mb-2">ACCOUNT ACTIVITY</h3>
-                                                <div className="space-y-3">
-                                                    <div className="flex justify-between items-center">
-                                                        <div>
-                                                            <p className="font-medium text-gray-800">Login from Chrome</p>
-                                                            <p className="text-xs text-gray-500">Today at 10:30 AM</p>
-                                                        </div>
-                                                        <span className="text-green-500 text-xs font-medium">ACTIVE NOW</span>
+                                    
+                                    <div className="grid grid-cols-1 gap-6">
+                                        {/* Membership Status */}
+                                        <div className="bg-amber-50 p-4 md:p-5 rounded-xl border border-amber-200">
+                                            <h3 className="text-sm font-medium text-amber-700 mb-4 text-center md:text-left">MEMBERSHIP STATUS</h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="text-center md:text-left">
+                                                    <p className="text-xs text-amber-600 mb-1">Current Status</p>
+                                                    <div className="flex justify-center md:justify-start">
+                                                        {getMembershipBadge()}
                                                     </div>
-                                                    <div className="flex justify-between items-center">
-                                                        <div>
-                                                            <p className="font-medium text-gray-800">Login from Safari</p>
-                                                            <p className="text-xs text-gray-500">Yesterday at 8:45 PM</p>
-                                                        </div>
+                                                    {userData.membershipPayment?.slipImage && (
+                                                        <p className="text-xs text-green-600 mt-2">
+                                                            Payment slip uploaded: {new Date(userData.membershipPayment.uploadedAt).toLocaleDateString()}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                
+                                                <div className="text-center md:text-left">
+                                                    <p className="text-xs text-amber-600 mb-1">Expiry Date</p>
+                                                    <p className="font-medium text-gray-800">
+                                                        {userData.membershipExpiry 
+                                                            ? new Date(userData.membershipExpiry).toLocaleDateString() 
+                                                            : 'Not available'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Payment Slip Upload */}
+                                        {(userData.membershipStatus === 'PENDING' || !userData.membershipPayment?.slipImage) && (
+                                            <div className="bg-amber-50 p-4 md:p-5 rounded-xl border border-amber-200">
+                                                <h3 className="text-sm font-medium text-amber-700 mb-4 text-center md:text-left">UPLOAD PAYMENT SLIP</h3>
+                                                <form onSubmit={handleMembershipSlipUpload} className="space-y-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-amber-700 mb-2">
+                                                            Payment Slip (Image)
+                                                        </label>
+                                                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-amber-300 rounded-xl cursor-pointer bg-amber-100 hover:bg-amber-200 transition-colors">
+                                                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                                <MdPayment className="w-8 h-8 text-amber-500 mb-2" />
+                                                                <p className="text-xs text-amber-600 text-center px-2">
+                                                                    {membershipSlip ? membershipSlip.name : "Click to upload payment slip"}
+                                                                </p>
+                                                            </div>
+                                                            <input 
+                                                                type="file" 
+                                                                onChange={(e) => setMembershipSlip(e.target.files[0])}
+                                                                accept="image/*"
+                                                                required
+                                                                className="hidden" 
+                                                            />
+                                                        </label>
+                                                    </div>
+
+                                                    <button
+                                                        type="submit"
+                                                        disabled={isUploading || !membershipSlip}
+                                                        className="w-full bg-amber-600 text-white py-2 rounded-lg font-medium hover:bg-amber-700 transition-all disabled:opacity-50 flex items-center justify-center"
+                                                    >
+                                                        <MdSave className="mr-2" />
+                                                        {isUploading ? 'Uploading...' : 'Submit Payment Slip'}
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        )}
+
+                                        {/* Show uploaded slip if exists */}
+                                        {userData.membershipPayment?.slipImage && (
+                                            <div className="bg-amber-50 p-4 md:p-5 rounded-xl border border-amber-200">
+                                                <h3 className="text-sm font-medium text-amber-700 mb-4 text-center md:text-left">UPLOADED PAYMENT SLIP</h3>
+                                                <div className="flex flex-col items-center space-y-4">
+                                                    <img 
+                                                        src={`http://localhost:8000${userData.membershipPayment.slipImage}`}
+                                                        alt="Payment slip"
+                                                        className="max-w-xs w-full h-auto border rounded-lg shadow-sm cursor-pointer"
+                                                        onClick={() => window.open(`http://localhost:8000${userData.membershipPayment.slipImage}`, '_blank')}
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none';
+                                                            e.target.nextSibling.style.display = 'block';
+                                                        }}
+                                                    />
+                                                    <div className="hidden text-center p-8 bg-gray-100 rounded-lg">
+                                                        <p className="text-gray-500">Image not available</p>
+                                                        <p className="text-xs text-gray-400 mt-1">Path: {userData.membershipPayment.slipImage}</p>
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <p className="text-xs text-amber-600">
+                                                            Uploaded: {new Date(userData.membershipPayment.uploadedAt).toLocaleString()}
+                                                        </p>
+                                                        <p className="text-xs text-blue-500 mt-1">Click image to view full size</p>
+                                                        {userData.membershipStatus === 'PENDING' && (
+                                                            <p className="text-sm text-amber-600 mt-2 font-medium">
+                                                                Waiting for admin approval...
+                                                            </p>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        )}
+
+                                        {/* QR Code Section */}
+                                        {userData.membershipStatus === 'ACTIVE' && (
+                                            <div className="bg-amber-50 p-4 md:p-5 rounded-xl border border-amber-200">
+                                                <h3 className="text-sm font-medium text-amber-700 mb-4 text-center md:text-left">MEMBERSHIP CARD</h3>
+                                                <div className="flex flex-col items-center">
+                                                    <div className="bg-white p-4 rounded-xl shadow-md border border-amber-200">
+                                                        <div className="flex justify-center mb-4">
+                                                            <div 
+                                                                className="cursor-pointer"
+                                                                onClick={() => setShowQRCode(!showQRCode)}
+                                                            >
+                                                                {showQRCode ? (
+                                                                    <QRCodeSVG 
+                                                                        value={generateQRData()} 
+                                                                        size={128}
+                                                                        level="H"
+                                                                        includeMargin
+                                                                    />
+                                                                ) : (
+                                                                    <div className="w-32 h-32 bg-amber-100 flex items-center justify-center rounded border border-amber-200">
+                                                                        <MdQrCode className="text-4xl text-amber-600" />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <p className="text-xs text-amber-600 text-center mt-2">
+                                                            {showQRCode 
+                                                                ? 'Scan this QR code for your membership details' 
+                                                                : 'Click to show QR code'}
+                                                        </p>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => setShowQRCode(!showQRCode)}
+                                                        className="mt-4 bg-amber-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-amber-700 transition-colors flex items-center"
+                                                    >
+                                                        <MdQrCode className="mr-2" />
+                                                        {showQRCode ? 'Hide QR Code' : 'Show QR Code'}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
 
-                            {activeTab === 'academic' && userData.role === 'STUDENT' && (
-                                <div className="p-6">
+                            {activeTab === 'fines' && (
+                                <div className="p-4 md:p-6">
                                     <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-                                        <MdSchool className="mr-2 text-blue-600" />
-                                        Academic Information
+                                        <MdHistory className="mr-2 text-amber-600" />
+                                        Fines & History
                                     </h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="bg-gray-50 p-5 rounded-xl">
-                                            <h3 className="text-sm font-medium text-gray-500 mb-3">ACADEMIC DETAILS</h3>
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <p className="text-xs text-gray-400">Index Number</p>
-                                                    <p className="font-medium text-gray-800">{userData.indexNumber}</p>
+                                    
+                                    <div className="grid grid-cols-1 gap-6">
+                                        {/* Fines Overview */}
+                                        <div className="bg-amber-50 p-4 md:p-5 rounded-xl border border-amber-200">
+                                            <h3 className="text-sm font-medium text-amber-700 mb-4 text-center md:text-left">FINES OVERVIEW</h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="text-center md:text-left">
+                                                    <p className="text-xs text-amber-600 mb-1">Outstanding Fines</p>
+                                                    <p className="font-medium text-2xl text-gray-800">
+                                                        Rs. {userData.fines || 0}
+                                                    </p>
                                                 </div>
-                                                <div>
-                                                    <p className="text-xs text-gray-400">Batch</p>
-                                                    <p className="font-medium text-gray-800">2023/2024</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-gray-400">Faculty</p>
-                                                    <p className="font-medium text-gray-800">Medicine</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="bg-gray-50 p-5 rounded-xl">
-                                            <h3 className="text-sm font-medium text-gray-500 mb-3">CURRENT SEMESTER</h3>
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <p className="text-xs text-gray-400">Semester</p>
-                                                    <p className="font-medium text-gray-800">2nd Year - 1st Semester</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-gray-400">GPA</p>
-                                                    <p className="font-medium text-gray-800">3.75</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-gray-400">Class Rank</p>
-                                                    <p className="font-medium text-gray-800">15/120</p>
+                                                
+                                                <div className="text-center md:text-left">
+                                                    <p className="text-xs text-amber-600 mb-1">Fine Rate</p>
+                                                    <p className="font-medium text-gray-800">
+                                                        Rs. 1 per day
+                                                    </p>
                                                 </div>
                                             </div>
+                                            
+                                            {userData.fines > 0 && (
+                                                <div className="mt-4">
+                                                    <button className="w-full bg-amber-600 text-white py-2 rounded-lg font-medium hover:bg-amber-700 transition-colors">
+                                                        Pay Fines Now
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
-                                    </div>
-                                </div>
-                            )}
 
-                            {activeTab === 'professional' && ['DOCTOR', 'NURSE', 'PHARMACY', 'LABORATORY'].includes(userData.role) && (
-                                <div className="p-6">
-                                    <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-                                        <MdMedicalServices className="mr-2 text-blue-600" />
-                                        Professional Information
-                                    </h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="bg-gray-50 p-5 rounded-xl">
-                                            <h3 className="text-sm font-medium text-gray-500 mb-3">PROFESSIONAL DETAILS</h3>
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <p className="text-xs text-gray-400">Department</p>
-                                                    <p className="font-medium text-gray-800">
-                                                        {userData.role === 'DOCTOR' ? 'Cardiology' : 
-                                                         userData.role === 'NURSE' ? 'Emergency' :
-                                                         userData.role === 'PHARMACY' ? 'Pharmacy' : 'Laboratory'}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-gray-400">Employee ID</p>
-                                                    <p className="font-medium text-gray-800">
-                                                        {userData.role === 'DOCTOR' ? 'DOC-' + userData.indexNumber : 
-                                                         userData.role === 'NURSE' ? 'NUR-' + userData.indexNumber :
-                                                         userData.role === 'PHARMACY' ? 'PHA-' + userData.indexNumber : 'LAB-' + userData.indexNumber}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-gray-400">Years of Service</p>
-                                                    <p className="font-medium text-gray-800">
-                                                        {userData.role === 'DOCTOR' ? '5 years' : 
-                                                         userData.role === 'NURSE' ? '3 years' :
-                                                         userData.role === 'PHARMACY' ? '2 years' : '1 year'}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="bg-gray-50 p-5 rounded-xl">
-                                            <h3 className="text-sm font-medium text-gray-500 mb-3">QUALIFICATIONS</h3>
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <p className="text-xs text-gray-400">Specialization</p>
-                                                    <p className="font-medium text-gray-800">
-                                                        {userData.role === 'DOCTOR' ? 'Cardiologist' : 
-                                                         userData.role === 'NURSE' ? 'Registered Nurse' :
-                                                         userData.role === 'PHARMACY' ? 'Clinical Pharmacist' : 'Medical Lab Scientist'}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-gray-400">License Number</p>
-                                                    <p className="font-medium text-gray-800">
-                                                        {userData.role === 'DOCTOR' ? 'SLMC-' + Math.floor(100000 + Math.random() * 900000) : 
-                                                         userData.role === 'NURSE' ? 'SNC-' + Math.floor(100000 + Math.random() * 900000) :
-                                                         userData.role === 'PHARMACY' ? 'SPC-' + Math.floor(100000 + Math.random() * 900000) : 'SMLS-' + Math.floor(100000 + Math.random() * 900000)}
-                                                    </p>
-                                                </div>
-                                            </div>
+                                        {/* Reservation History */}
+                                        <div className="bg-amber-50 p-4 md:p-5 rounded-xl border border-amber-200">
+                                            <h3 className="text-sm font-medium text-amber-700 mb-4 text-center md:text-left">RESERVATION HISTORY</h3>
+                                            <p className="text-gray-600 text-center">
+                                                Your reservation history will appear here once you start borrowing books.
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -428,98 +776,82 @@ const Profile = () => {
                     {/* Sidebar */}
                     <div className="space-y-6">
                         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-                            <div className="p-6">
-                                <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                                    <MdInfo className="mr-2 text-blue-600" />
+                            <div className="p-4 md:p-6">
+                                <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center justify-center md:justify-start">
+                                    <MdInfo className="mr-2 text-amber-600" />
                                     Quick Actions
                                 </h2>
                                 <div className="space-y-3">
-                                    <button className="w-full text-left p-3 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors flex items-center">
+                                    <button 
+                                        onClick={handleEditToggle}
+                                        className="w-full text-left p-3 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors flex items-center justify-center md:justify-start"
+                                    >
                                         <MdModeEdit className="mr-2" />
-                                        Update Profile
+                                        {isEditing ? 'Cancel Editing' : 'Edit Profile'}
                                     </button>
                                     <button 
-                                        className="w-full text-left p-3 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors flex items-center"
+                                        className="w-full text-left p-3 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors flex items-center justify-center md:justify-start"
                                         onClick={() => document.getElementById('changePasswordModal').showModal()}
                                     >
                                         <MdSecurity className="mr-2" />
                                         Change Password
                                     </button>
-                                    {userData.role === 'STUDENT' && (
-                                        <button className="w-full text-left p-3 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors flex items-center">
-                                            <MdSchool className="mr-2" />
-                                            View Academic Records
+                                    {userData.membershipStatus === 'ACTIVE' && (
+                                        <button 
+                                            className="w-full text-left p-3 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors flex items-center justify-center md:justify-start"
+                                            onClick={() => setShowQRCode(!showQRCode)}
+                                        >
+                                            <MdQrCode className="mr-2" />
+                                            {showQRCode ? 'Hide QR Code' : 'Show QR Code'}
                                         </button>
                                     )}
-                                    {['DOCTOR', 'NURSE'].includes(userData.role) && (
-                                        <button className="w-full text-left p-3 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors flex items-center">
-                                            <MdMedicalServices className="mr-2" />
-                                            View Schedule
-                                        </button>
-                                    )}
+                                    <button 
+                                        className="w-full text-left p-3 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors flex items-center justify-center md:justify-start"
+                                        onClick={showLogoutConfirmation}
+                                    >
+                                        <MdLogout className="mr-2" />
+                                        Logout
+                                    </button>
                                 </div>
                             </div>
                         </div>
 
-                        {/* QR Code Section */}
-                        {userData.role === 'STUDENT' && qrCodeData && (
-                            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-                                <div className="p-6">
-                                    <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                                        <FaQrcode className="mr-2 text-blue-600" />
-                                        Medical QR Code
-                                    </h2>
-                                    <div className="flex flex-col items-center">
-                                        <div className="bg-white p-4 rounded-lg border border-gray-200 mb-3">
-                                            <QRCodeSVG
-                                                value={qrCodeData}
-                                                size={180}
-                                                level="H"
-                                                includeMargin={true}
-/>
-                                        </div>
-                                        <p className="text-sm text-gray-500 text-center">
-                                            Scan this code to access your medical records
-                                        </p>
-                                        <button 
-                                            onClick={() => {
-                                                // Create a temporary link to download the QR code
-                                                const canvas = document.querySelector("canvas");
-                                                const pngUrl = canvas
-                                                    .toDataURL("image/png")
-                                                    .replace("image/png", "image/octet-stream");
-                                                const downloadLink = document.createElement("a");
-                                                downloadLink.href = pngUrl;
-                                                downloadLink.download = `${userData.name}-medical-qr.png`;
-                                                document.body.appendChild(downloadLink);
-                                                downloadLink.click();
-                                                document.body.removeChild(downloadLink);
-                                            }}
-                                            className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium"
-                                        >
-                                            Download QR Code
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
+                        {/* Membership Status Card */}
                         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-                            <div className="p-6">
-                                <h2 className="text-lg font-semibold text-gray-800 mb-4">System Information</h2>
-                                <div className="space-y-4">
-                                    <div>
-                                        <p className="text-xs text-gray-400">Last System Update</p>
-                                        <p className="font-medium text-gray-800">Version 2.3.1 (May 2023)</p>
+                            <div className="p-4 md:p-6">
+                                <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center justify-center md:justify-start">
+                                    <MdPayment className="mr-2 text-amber-600" />
+                                    Membership Status
+                                </h2>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-600">Status:</span>
+                                        {getMembershipBadge()}
                                     </div>
-                                    <div>
-                                        <p className="text-xs text-gray-400">Next Maintenance</p>
-                                        <p className="font-medium text-gray-800">June 15, 2023 (2:00 AM - 4:00 AM)</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-gray-400">Support Contact</p>
-                                        <p className="font-medium text-gray-800">support@prabodhahealth.lk</p>
-                                    </div>
+                                    {userData.membershipExpiry && (
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-600">Expiry:</span>
+                                            <span className="font-medium">
+                                                {new Date(userData.membershipExpiry).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {userData.fines > 0 && (
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-600">Fines:</span>
+                                            <span className="font-medium text-red-600">
+                                                Rs. {userData.fines}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {userData.membershipPayment?.slipImage && (
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-600">Payment:</span>
+                                            <span className="font-medium text-green-600">
+                                                Uploaded
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -529,23 +861,19 @@ const Profile = () => {
 
             {/* Modals */}
             <dialog id="changePasswordModal" className="modal">
-                <div className="modal-box max-w-md">
+                <div className="modal-box max-w-md mx-4">
                     <ChangePassword 
                         onClose={() => document.getElementById('changePasswordModal').close()}
-                        onSuccess={handleLogout}
+                        onSuccess={() => {
+                            document.getElementById('changePasswordModal').close();
+                            fetchUserDetails();
+                        }}
                     />
                 </div>
                 <form method="dialog" className="modal-backdrop">
                     <button>close</button>
                 </form>
             </dialog>
-
-            <UpdateProfile 
-                userData={userData}
-                onClose={() => {
-                    fetchUserDetails();
-                }}
-            />
         </div>
     );
 };

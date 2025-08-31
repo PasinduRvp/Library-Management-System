@@ -1,60 +1,94 @@
+// models/userModel.js - Updated
 const mongoose = require("mongoose");
-const qr = require('qrcode');
+const bcrypt = require('bcryptjs');
 
-const userSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema(
+  {
     name: { type: String, required: true },
-    email: { type: String, unique: true, required: true },
+    email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    profilePic: String,
-    role: {
-        type: String,
-        required: true,
-        enum: ['ADMIN', 'DOCTOR', 'STUDENT', 'NURSE', 'PHARMACY', 'LABORATORY', 'GENERAL'],
-        default: 'GENERAL'
+    role: { type: String, enum: ["ADMIN", "GENERAL"], default: "GENERAL" },
+    profilePic: { type: String },
+    registrationNumber: { type: String, unique: true },
+    contactNumber: { type: String },
+    address: { type: String },
+    // New fields for membership
+    membershipStatus: { 
+      type: String, 
+      enum: ["PENDING", "ACTIVE", "EXPIRED", "SUSPENDED"], 
+      default: "PENDING" 
     },
-    indexNumber: {
-        type: String,
-        unique: true,  
-        sparse: true,   
-        required: function() { return this.role === 'STUDENT'; }
+    membershipExpiry: { type: Date },
+    membershipPayment: {
+      slipImage: { type: String },
+      uploadedAt: { type: Date },
+      approvedAt: { type: Date },
+      approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
     },
-    year: {
-        type: String,
-        enum: ['Y1', 'Y2', 'Y3'],
-        required: function() { return this.role === 'STUDENT'; }
-    },
-    semester: {
-        type: String,
-        enum: ['S1', 'S2'],
-        required: function() { return this.role === 'STUDENT'; }
-    },
-    qrCode: String, // Store QR code data URL
-    medicalRecords: [{
-        date: { type: Date, default: Date.now },
-        doctor: { type: String, required: true },
-        diagnosis: String,
-        treatment: String,
-        prescription: String,
-        notes: String
-    }]
-}, { timestamps: true });
+    fines: { type: Number, default: 0 },
+    reservationLimit: { type: Number, default: 2 },
+    qrCode: { type: String } // Store QR code data or path
+  },
+  { timestamps: true }
+);
 
-// Generate QR code before saving
+// ... rest of the user model code remains the same
+
+// Pre-save middleware to generate registration number based on role
 userSchema.pre('save', async function(next) {
-    if (!this.qrCode) {
-        try {
-            const qrData = JSON.stringify({
-                userId: this._id,
-                name: this.name,
-                indexNumber: this.indexNumber || ''
-            });
-            this.qrCode = await qr.toDataURL(qrData);
-        } catch (err) {
-            console.error('Error generating QR code:', err);
+  if (this.isNew && !this.registrationNumber) {
+    try {
+      let prefix = 'BN';
+      let startingNumber = 1001;
+      
+      if (this.role === 'ADMIN') {
+        prefix = 'BN_ADM';
+        startingNumber = 101;
+        
+        const lastAdmin = await this.constructor.findOne(
+          { role: 'ADMIN', registrationNumber: { $regex: /^BN_ADM\d+$/ } },
+          { registrationNumber: 1 },
+          { sort: { createdAt: -1 } }
+        );
+        
+        if (lastAdmin && lastAdmin.registrationNumber) {
+          const lastNumber = parseInt(lastAdmin.registrationNumber.replace('BN_ADM', ''));
+          startingNumber = lastNumber + 1;
         }
+      } else {
+        const lastUser = await this.constructor.findOne(
+          { role: 'GENERAL', registrationNumber: { $regex: /^BN\d+$/ } },
+          { registrationNumber: 1 },
+          { sort: { createdAt: -1 } }
+        );
+        
+        if (lastUser && lastUser.registrationNumber) {
+          const lastNumber = parseInt(lastUser.registrationNumber.replace('BN', ''));
+          startingNumber = lastNumber + 1;
+        }
+      }
+      
+      this.registrationNumber = `${prefix}${startingNumber}`;
+    } catch (error) {
+      return next(error);
     }
-    next();
+  }
+  next();
 });
 
-const User = mongoose.model("user", userSchema);
+// Hash password before saving
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+const User = mongoose.model("User", userSchema);
+
 module.exports = User;

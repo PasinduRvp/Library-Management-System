@@ -1,32 +1,33 @@
-const userModel = require('../models/userModel')
+const userModel = require('../models/userModel');
 
-async function userDetailsController(req,res) {
-    try{
-        console.log("userId",req.userId)
-        const user = await userModel.findById(req.userId)
+async function userDetailsController(req, res) {
+    try {
+        const user = await userModel.findById(req.userId).select('-password');
+        
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found",
+                data: null,
+                error: true,
+                success: false
+            });
+        }
 
         res.status(200).json({
-            data : user,
-            error : false,
-            success : true,
-            message : "User Details"
-        })
+            data: user,
+            error: false,
+            success: true,
+            message: "User details fetched successfully"
+        });
 
-        console.log("user",user)
-       
-    }catch(err){
-        res.status(400).json({
-            message : err.message || err,
-            error : true,
-            success : false,
-            
-        })
+    } catch (err) {
+        console.error("Error in userDetailsController:", err);
+        res.status(500).json({
+            message: err.message || "Internal server error",
+            error: true,
+            success: false
+        });
     }
-    
 }
 
-
-
-
-
-module.exports = userDetailsController
+module.exports = userDetailsController;

@@ -29,4 +29,4 @@ async function deleteUser(req, res) {
     }
 }
 
-module.exports = deleteUser
+module.exports = deleteUser;

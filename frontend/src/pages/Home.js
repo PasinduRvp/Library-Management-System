@@ -1,8 +1,8 @@
 import React from "react";
-import { FaUserMd, FaCalendarCheck, FaHospitalSymbol, FaAmbulance, FaClinicMedical } from "react-icons/fa";
+import { FaBook, FaSearch, FaUserTie, FaClock, FaUsers, FaChartLine } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import webBg from "../assest/webbg.jpg";
+import webBg from "../assest/libBack.jpeg";
 
 const Homepage = () => {
   return (
@@ -26,17 +26,17 @@ const Homepage = () => {
           transition={{ delay: 0.3, duration: 0.8 }}
           className="text-white max-w-4xl z-10"
         >
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">Welcome to PRABODHA Hospital</h1>
+          <h1 className="text-4xl md:text-6xl font-bold mb-6">Welcome to BookNest Library</h1>
           <p className="text-lg md:text-xl mb-8">
-            Comprehensive healthcare services with expert medical professionals dedicated to your well-being.
+            Discover a world of knowledge with our extensive collection of books and resources for all ages and interests.
           </p>
-          <Link to="/all-channelings">
+          <Link to="/book-collection">
             <motion.button 
-              className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-full shadow-lg hover:bg-blue-700 transition-all"
+              className="px-8 py-3 bg-amber-600 text-white font-semibold rounded-full shadow-lg hover:bg-amber-700 transition-all"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              Book an Appointment
+              Browse Collection
             </motion.button>
           </Link>
         </motion.div>
@@ -61,7 +61,7 @@ const Homepage = () => {
           transition={{ duration: 0.8 }}
           className="container mx-auto px-6"
         >
-          <h2 className="text-3xl font-bold text-gray-800 mb-12">Our Services</h2>
+          <h2 className="text-3xl font-bold text-gray-800 mb-12">Our Library Services</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {services.map((service, index) => (
@@ -74,7 +74,7 @@ const Homepage = () => {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1, duration: 0.5 }}
               >
-                <div className="text-blue-600 text-5xl mb-4 flex justify-center">
+                <div className="text-amber-600 text-5xl mb-4 flex justify-center">
                   {service.icon}
                 </div>
                 <h3 className="text-xl font-semibold mb-3">{service.title}</h3>
@@ -84,42 +84,80 @@ const Homepage = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Statistics Section */}
+      <div className="w-full py-16 bg-amber-50">
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="container mx-auto px-6"
+        >
+          <h2 className="text-3xl font-bold text-gray-800 mb-12">Library at a Glance</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat, index) => (
+              <motion.div
+                key={index}
+                className="text-center"
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
+              >
+                <div className="text-3xl md:text-4xl font-bold text-amber-700 mb-2">
+                  {stat.value}
+                </div>
+                <div className="text-gray-600">{stat.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      </div>
+
+      
     </div>
   );
 };
 
-
 const services = [
   {
-    icon: <FaUserMd />,
-    title: "Expert Doctors",
-    description: "Highly skilled specialists in multiple medical fields with years of experience."
+    icon: <FaBook />,
+    title: "Extensive Collection",
+    description: "Access thousands of books across various genres, from classic literature to modern bestsellers."
   },
   {
-    icon: <FaCalendarCheck />,
-    title: "Easy Appointments",
-    description: "Book your doctor consultations online with just a few clicks."
+    icon: <FaSearch />,
+    title: "Easy Discovery",
+    description: "Advanced search and catalog system to help you find exactly what you're looking for."
   },
   {
-    icon: <FaHospitalSymbol />,
-    title: "Advanced Facilities",
-    description: "State-of-the-art medical infrastructure and cutting-edge technology."
+    icon: <FaUserTie />,
+    title: "Expert Staff",
+    description: "Knowledgeable librarians ready to assist you with recommendations and research help."
   },
   {
-    icon: <FaAmbulance />,
-    title: "Emergency Care",
-    description: "24/7 emergency services with rapid response teams."
+    icon: <FaClock />,
+    title: "Flexible Hours",
+    description: "Open extended hours with online resources available 24/7 for your convenience."
   },
   {
-    icon: <FaClinicMedical />,
-    title: "Preventive Care",
-    description: "Comprehensive health check-ups and preventive medicine programs."
+    icon: <FaUsers />,
+    title: "Community Events",
+    description: "Book clubs, author talks, and reading programs for all age groups."
   },
   {
-    icon: <FaHospitalSymbol />,
-    title: "Specialized Treatments",
-    description: "Advanced treatments for complex medical conditions."
+    icon: <FaChartLine />,
+    title: "Digital Resources",
+    description: "E-books, audiobooks, and online databases accessible from anywhere."
   }
+];
+
+const stats = [
+  { value: "50,000+", label: "Books Available" },
+  { value: "10,000+", label: "Active Members" },
+  { value: "24/7", label: "Digital Access" },
+  { value: "100+", label: "Annual Events" }
 ];
 
 export default Homepage;

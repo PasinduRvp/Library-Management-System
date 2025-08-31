@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { FaEye, FaEyeSlash, FaUser, FaEnvelope, FaKey, FaUserCircle, FaGraduationCap, FaCalendarAlt } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { FaEye, FaEyeSlash, FaUser, FaEnvelope, FaKey, FaUserCircle } from 'react-icons/fa';
 import { IoClose, IoSave } from "react-icons/io5";
 import imageTobase64 from '../helpers/imageTobase64';
 import SummaryApi from '../common';
@@ -11,8 +11,7 @@ const AddUser = ({ onClose, fetchAllUsers }) => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isCheckingIndex, setIsCheckingIndex] = useState(false);
-    const [indexNumberExists, setIndexNumberExists] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     
     const [data, setData] = useState({
         email: "",
@@ -21,42 +20,9 @@ const AddUser = ({ onClose, fetchAllUsers }) => {
         confirmPassword: "",
         profilePic: "",
         role: "",
-        indexNumber: "",
-        year: "",
-        semester: ""
     });
 
     const [errors, setErrors] = useState({});
-
-    const years = ['Y1', 'Y2', 'Y3'];
-    const semesters = ['S1', 'S2'];
-
-    const checkIndexNumberExists = async (indexNumber) => {
-        if (!indexNumber || data.role !== ROLE.STUDENT) return false;
-        
-        try {
-            setIsCheckingIndex(true);
-            const response = await fetch(`${SummaryApi.checkIndexNumber.url}?indexNumber=${indexNumber}`);
-            const result = await response.json();
-            
-            if (response.ok) {
-                setIndexNumberExists(result.exists);
-                if (result.exists) {
-                    setErrors(prev => ({
-                        ...prev,
-                        indexNumber: "This index number is already in use"
-                    }));
-                }
-                return result.exists;
-            }
-            return false;
-        } catch (error) {
-            console.error("Error checking index number:", error);
-            return false;
-        } finally {
-            setIsCheckingIndex(false);
-        }
-    };
 
     const handleOnChange = (e) => {
         const { name, value } = e.target;
@@ -65,33 +31,22 @@ const AddUser = ({ onClose, fetchAllUsers }) => {
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: "" }));
         }
-        
-        if (name === 'indexNumber' && data.role === ROLE.STUDENT) {
-            setIndexNumberExists(false);
-        }
     };
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            if (data.role === ROLE.STUDENT && data.indexNumber) {
-                checkIndexNumberExists(data.indexNumber);
-            }
-        }, 500);
-
-        return () => clearTimeout(timer);
-    }, [data.indexNumber, data.role]);
 
     const handleUploadPic = async(e) => {
         const file = e.target.files[0];
         if (!file) return;
         
+        setIsUploading(true);
         try {
             const imagePic = await imageTobase64(file);
             setData(prev => ({ ...prev, profilePic: imagePic }));
             toast.success("Image uploaded successfully");
         } catch (error) {
-            toast.error("Failed to upload image");
+            toast.error(error.message || "Failed to upload image");
             console.error("Image upload error:", error);
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -115,26 +70,6 @@ const AddUser = ({ onClose, fetchAllUsers }) => {
         if (!data.role) {
             newErrors.role = "Role is required";
             isValid = false;
-        }
-
-        if (data.role === ROLE.STUDENT) {
-            if (!data.indexNumber) {
-                newErrors.indexNumber = "Index number is required for students";
-                isValid = false;
-            } else if (await checkIndexNumberExists(data.indexNumber)) {
-                newErrors.indexNumber = "This index number is already in use";
-                isValid = false;
-            }
-
-            if (!data.year) {
-                newErrors.year = "Year is required for students";
-                isValid = false;
-            }
-
-            if (!data.semester) {
-                newErrors.semester = "Semester is required for students";
-                isValid = false;
-            }
         }
 
         if (!data.password) {
@@ -222,19 +157,31 @@ const AddUser = ({ onClose, fetchAllUsers }) => {
                                 src={data.profilePic || defaultProfilePic} 
                                 alt="Profile" 
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    e.target.src = defaultProfilePic;
+                                    e.target.onerror = null;
+                                }}
                             />
-                            <label className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
+                            <label className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer disabled:opacity-50">
                                 <input 
                                     type="file" 
                                     className="hidden" 
                                     onChange={handleUploadPic}
                                     accept="image/*"
-                                    disabled={isSubmitting}
+                                    disabled={isSubmitting || isUploading}
                                 />
                                 <span className="text-white text-xs font-medium">Change Photo</span>
                             </label>
+                            {isUploading && (
+                                <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
+                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                                </div>
+                            )}
                         </div>
-                        <p className="text-xs text-gray-500 mt-2">Click photo to upload</p>
+                        <p className="text-xs text-gray-500 mt-2 text-center">
+                            Click photo to upload<br />
+                            <span className="text-blue-500">Max 1MB, resized to 400x400px</span>
+                        </p>
                     </div>
 
                     {/* Name Field */}
@@ -249,7 +196,7 @@ const AddUser = ({ onClose, fetchAllUsers }) => {
                             name="name"
                             value={data.name}
                             onChange={handleOnChange}
-                            className={`w-full p-3 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                            className={`w-full p-3 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50`}
                             disabled={isSubmitting}
                         />
                         {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
@@ -267,7 +214,7 @@ const AddUser = ({ onClose, fetchAllUsers }) => {
                             name="email"
                             value={data.email}
                             onChange={handleOnChange}
-                            className={`w-full p-3 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                            className={`w-full p-3 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50`}
                             disabled={isSubmitting}
                         />
                         {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
@@ -283,7 +230,7 @@ const AddUser = ({ onClose, fetchAllUsers }) => {
                             name="role"
                             value={data.role}
                             onChange={handleOnChange}
-                            className={`w-full p-3 border ${errors.role ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                            className={`w-full p-3 border ${errors.role ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50`}
                             disabled={isSubmitting}
                         >
                             <option value="">Select a role</option>
@@ -293,78 +240,6 @@ const AddUser = ({ onClose, fetchAllUsers }) => {
                         </select>
                         {errors.role && <p className="text-red-500 text-xs mt-1">{errors.role}</p>}
                     </div>
-
-                    {/* Student Specific Fields */}
-                    {data.role === ROLE.STUDENT && (
-                        <>
-                            {/* Index Number */}
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700 flex items-center">
-                                    <FaGraduationCap className="mr-2 text-blue-500" />
-                                    Index Number
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        placeholder="Enter index number"
-                                        name="indexNumber"
-                                        value={data.indexNumber}
-                                        onChange={handleOnChange}
-                                        className={`w-full p-3 border ${errors.indexNumber ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
-                                        disabled={isSubmitting || isCheckingIndex}
-                                    />
-                                    {isCheckingIndex && (
-                                        <div className="absolute right-3 top-3.5">
-                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
-                                        </div>
-                                    )}
-                                </div>
-                                {errors.indexNumber && <p className="text-red-500 text-xs mt-1">{errors.indexNumber}</p>}
-                            </div>
-
-                            {/* Year Selection */}
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700 flex items-center">
-                                    <FaCalendarAlt className="mr-2 text-blue-500" />
-                                    Year
-                                </label>
-                                <select
-                                    name="year"
-                                    value={data.year}
-                                    onChange={handleOnChange}
-                                    className={`w-full p-3 border ${errors.year ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
-                                    disabled={isSubmitting}
-                                >
-                                    <option value="">Select year</option>
-                                    {years.map(year => (
-                                        <option key={year} value={year}>{year}</option>
-                                    ))}
-                                </select>
-                                {errors.year && <p className="text-red-500 text-xs mt-1">{errors.year}</p>}
-                            </div>
-
-                            {/* Semester Selection */}
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700 flex items-center">
-                                    <FaCalendarAlt className="mr-2 text-blue-500" />
-                                    Semester
-                                </label>
-                                <select
-                                    name="semester"
-                                    value={data.semester}
-                                    onChange={handleOnChange}
-                                    className={`w-full p-3 border ${errors.semester ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
-                                    disabled={isSubmitting}
-                                >
-                                    <option value="">Select semester</option>
-                                    {semesters.map(semester => (
-                                        <option key={semester} value={semester}>{semester}</option>
-                                    ))}
-                                </select>
-                                {errors.semester && <p className="text-red-500 text-xs mt-1">{errors.semester}</p>}
-                            </div>
-                        </>
-                    )}
 
                     {/* Password Field */}
                     <div className="space-y-2">
@@ -379,13 +254,13 @@ const AddUser = ({ onClose, fetchAllUsers }) => {
                                 name="password"
                                 value={data.password}
                                 onChange={handleOnChange}
-                                className={`w-full p-3 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10`}
+                                className={`w-full p-3 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10 disabled:opacity-50`}
                                 disabled={isSubmitting}
                                 minLength={6}
                             />
                             <button
                                 type="button"
-                                className="absolute right-3 top-3.5 text-gray-500 hover:text-blue-600"
+                                className="absolute right-3 top-3.5 text-gray-500 hover:text-blue-600 disabled:opacity-50"
                                 onClick={() => setShowPassword(!showPassword)}
                                 disabled={isSubmitting}
                             >
@@ -408,13 +283,13 @@ const AddUser = ({ onClose, fetchAllUsers }) => {
                                 name="confirmPassword"
                                 value={data.confirmPassword}
                                 onChange={handleOnChange}
-                                className={`w-full p-3 border ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10`}
+                                className={`w-full p-3 border ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10 disabled:opacity-50`}
                                 disabled={isSubmitting}
                                 minLength={6}
                             />
                             <button
                                 type="button"
-                                className="absolute right-3 top-3.5 text-gray-500 hover:text-blue-600"
+                                className="absolute right-3 top-3.5 text-gray-500 hover:text-blue-600 disabled:opacity-50"
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                 disabled={isSubmitting}
                             >
@@ -430,7 +305,7 @@ const AddUser = ({ onClose, fetchAllUsers }) => {
                             <button
                                 type="button"
                                 onClick={() => onClose()}
-                                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
                                 disabled={isSubmitting}
                             >
                                 Cancel
@@ -438,7 +313,7 @@ const AddUser = ({ onClose, fetchAllUsers }) => {
                             <button
                                 type="submit"
                                 className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center disabled:opacity-70"
-                                disabled={isSubmitting || isCheckingIndex}
+                                disabled={isSubmitting || isUploading}
                             >
                                 <IoSave className="mr-2" />
                                 {isSubmitting ? 'Creating...' : 'Create User'}

@@ -9,6 +9,8 @@ import { motion } from "framer-motion";
 import { IoMdAdd } from "react-icons/io";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import defaultProfilePic from '../assest/loginIcon.jpg';
+import { FaIdCard, FaUserShield, FaUser } from "react-icons/fa";
 
 const AllUsers = () => {
   const [allUser, setAllUsers] = useState([]);
@@ -23,6 +25,19 @@ const AllUsers = () => {
   const [openAddUser, setOpenAddUser] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const getDefaultProfilePic = (name = 'User') => {
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=128`;
+  };
+
+  const getRoleIcon = (role) => {
+    switch(role) {
+      case 'ADMIN':
+        return <FaUserShield className="text-purple-600 text-sm" />;
+      default:
+        return <FaUser className="text-amber-600 text-sm" />;
+    }
+  };
 
   const fetchAllUsers = async () => {
     try {
@@ -56,7 +71,8 @@ const AllUsers = () => {
     } else {
       const filtered = allUser.filter(user =>
         user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase())
+        user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (user.registrationNumber && user.registrationNumber.toLowerCase().includes(searchQuery.toLowerCase()))
       );
       setFilteredUsers(filtered);
     }
@@ -78,34 +94,23 @@ const AllUsers = () => {
       // Header Section
       doc.setFontSize(20);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(0, 102, 204);
-      doc.text("PRABODHA", 14, 25);
-      doc.setTextColor(0, 153, 76);
-      const prabodhaWidth = doc.getTextWidth("PRABODHA");
-      doc.text("CENTRAL HOSPITAL", 14 + prabodhaWidth + 2, 25);
+      doc.setTextColor(251, 146, 60);
+      doc.text("BOOKNEST", 105, 25, { align: "center" });
 
       doc.setFontSize(10);
       doc.setTextColor(0, 0, 0);
       doc.setFont("helvetica", "normal");
-      doc.text("Prabodha Central Hospitals (PVT) LTD", 14, 32);
-      doc.text("No.49, Beach Road, Matara, Sri Lanka.", 14, 37);
-      doc.text("Tel: 041 2 238 338 / 071 18 41 662", 14, 42);
-      doc.text("Email: prabodhahospital@gmail.com", 14, 47);
-
-      doc.setTextColor(0, 102, 204);
-      const websiteText = "www.prabodhahealth.lk";
-      const websiteX = 160;
-      const websiteY = 47;
-      doc.text(websiteText, websiteX, websiteY, { align: "right" });
+      doc.text("Digital Library Management System", 105, 32, { align: "center" });
+      doc.text("Comprehensive User Management Report", 105, 37, { align: "center" });
 
       doc.setLineWidth(0.5);
-      doc.setDrawColor(0, 102, 204);
-      doc.line(14, 53, 196, 53);
+      doc.setDrawColor(251, 146, 60);
+      doc.line(14, 43, 196, 43);
 
       // Report Title
       doc.setFontSize(16);
       doc.setFont("helvetica", "bold");
-      doc.text("USER MANAGEMENT REPORT", 80, 65);
+      doc.text("USER MANAGEMENT REPORT", 105, 55, { align: "center" });
 
       // Report Metadata
       doc.setFontSize(10);
@@ -115,8 +120,8 @@ const AllUsers = () => {
         month: 'short',
         day: 'numeric'
       });
-      doc.text(`Report Generated: ${currentDate}`, 14, 75);
-      doc.text(`Total Users: ${filteredUsers.length}`, 160, 75, { align: "right" });
+      doc.text(`Report Generated: ${currentDate}`, 14, 65);
+      doc.text(`Total Users: ${filteredUsers.length}`, 160, 65, { align: "right" });
 
       // User Statistics
       const userRoles = {};
@@ -124,7 +129,7 @@ const AllUsers = () => {
         userRoles[user.role] = (userRoles[user.role] || 0) + 1;
       });
 
-      let yPos = 85;
+      let yPos = 75;
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
       doc.text("User Statistics", 14, yPos);
@@ -143,11 +148,12 @@ const AllUsers = () => {
       doc.text("User Details", 14, yPos);
       yPos += 10;
 
-      const tableColumns = ["#", "Name", "Email", "Role", "Joined Date"];
+      const tableColumns = ["#", "Name", "Email", "Reg Number", "Role", "Joined Date"];
       const tableRows = filteredUsers.map((user, index) => [
         index + 1,
         user.name,
         user.email,
+        user.registrationNumber || 'N/A',
         user.role,
         moment(user.createdAt).format("LL")
       ]);
@@ -158,18 +164,19 @@ const AllUsers = () => {
         startY: yPos,
         styles: { fontSize: 9, cellPadding: 2 },
         headStyles: { 
-          fillColor: [0, 102, 204], 
+          fillColor: [251, 146, 60],
           textColor: [255, 255, 255],
           fontStyle: 'bold'
         },
         columnStyles: {
-          0: { cellWidth: 10, halign: 'center' },
-          1: { cellWidth: 40 },
-          2: { cellWidth: 60 },
-          3: { cellWidth: 30, halign: 'center' },
-          4: { cellWidth: 40, halign: 'center' }
+          0: { cellWidth: 8, halign: 'center' },
+          1: { cellWidth: 35 },
+          2: { cellWidth: 45 },
+          3: { cellWidth: 25, halign: 'center' },
+          4: { cellWidth: 20, halign: 'center' },
+          5: { cellWidth: 30, halign: 'center' }
         },
-        alternateRowStyles: { fillColor: [240, 240, 240] },
+        alternateRowStyles: { fillColor: [254, 243, 199] },
         margin: { left: 14 }
       });
 
@@ -184,7 +191,7 @@ const AllUsers = () => {
       doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 280);
 
       // Save the PDF
-      doc.save(`Hospital_Users_Report_${currentDate.replace(/\s+/g, '_')}.pdf`);
+      doc.save(`BookNest_Users_Report_${currentDate.replace(/\s+/g, '_')}.pdf`);
       toast.success("User report downloaded successfully!");
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -220,7 +227,7 @@ const AllUsers = () => {
               }
               toast.dismiss();
             }}
-            className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg transition-colors shadow-md"
+            className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-xl transition-colors shadow-md hover:shadow-lg"
           >
             Delete
           </button>
@@ -229,7 +236,7 @@ const AllUsers = () => {
               toast.dismiss();
               toast.info("Deletion canceled");
             }}
-            className="bg-gray-200 hover:bg-gray-300 px-5 py-2 rounded-lg transition-colors shadow-md"
+            className="bg-gray-200 hover:bg-gray-300 px-5 py-2 rounded-xl transition-colors shadow-md hover:shadow-lg"
           >
             Cancel
           </button>
@@ -246,8 +253,8 @@ const AllUsers = () => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl min-h-screen">
-      <div className="bg-white py-5 px-6 flex flex-col md:flex-row justify-between items-center rounded-xl shadow-lg mb-6">
+    <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-6 rounded-3xl min-h-screen">
+      <div className="bg-white py-5 px-6 flex flex-col md:flex-row justify-between items-center rounded-2xl shadow-lg mb-6">
         <div className="mb-4 md:mb-0">
           <h2 className="font-bold text-2xl text-gray-800">User Management</h2>
           <p className="text-gray-600 text-sm">Manage all registered users</p>
@@ -260,8 +267,8 @@ const AllUsers = () => {
             </div>
             <input
               type="text"
-              placeholder="Search users by name or email..."
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              placeholder="Search users by name, email or registration number..."
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -272,7 +279,7 @@ const AllUsers = () => {
               onClick={generateUserReport}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-all shadow-md whitespace-nowrap"
+              className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg whitespace-nowrap"
               disabled={isLoading || filteredUsers.length === 0}
             >
               <MdDownload className="text-white text-xl" />
@@ -280,10 +287,10 @@ const AllUsers = () => {
             </motion.button>
             
             <motion.button
-              className="bg-blue-600 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-md whitespace-nowrap"
+              className="bg-amber-600 text-white py-2 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-amber-700 transition-all shadow-md hover:shadow-lg whitespace-nowrap"
               onClick={() => setOpenAddUser(true)}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               <IoMdAdd className="text-white text-lg" />
               <span>Add User</span>
@@ -293,23 +300,32 @@ const AllUsers = () => {
       </div>
 
       {isLoading ? (
-        <div className="bg-white rounded-xl shadow-lg p-8 flex justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="bg-white rounded-2xl shadow-lg p-8 flex justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-800">
+              <thead className="bg-amber-600">
                 <tr>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                     #
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                    Profile
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                     Name
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                     Email
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                    <div className="flex items-center">
+                      <FaIdCard className="mr-1" />
+                      Reg Number
+                    </div>
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                     Role
@@ -325,9 +341,22 @@ const AllUsers = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredUsers.length > 0 ? (
                   filteredUsers.map((user, index) => (
-                    <tr key={user._id || index} className="hover:bg-gray-50 transition-colors">
+                    <tr key={user._id || index} className="hover:bg-amber-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {index + 1}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="w-10 h-10 flex-shrink-0">
+                          <img 
+                            src={user?.profilePic || getDefaultProfilePic(user?.name)} 
+                            alt={user?.name}
+                            className="w-10 h-10 rounded-full object-cover border-2 border-amber-200"
+                            onError={(e) => {
+                              e.target.src = getDefaultProfilePic(user?.name);
+                              e.target.onerror = null;
+                            }}
+                          />
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-medium">
                         {user?.name}
@@ -335,16 +364,26 @@ const AllUsers = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                         {user?.email}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          user?.role === 'ADMIN' 
-                            ? 'bg-purple-100 text-purple-800' 
-                            : user?.role === 'STAFF' 
-                              ? 'bg-blue-100 text-blue-800' 
-                              : 'bg-green-100 text-green-800'
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <span className={`${
+                          user?.registrationNumber?.startsWith('BN_ADM') 
+                            ? 'text-purple-600' 
+                            : 'text-amber-600'
                         }`}>
-                          {user?.role}
+                          {user?.registrationNumber || 'Pending'}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <div className="flex items-center">
+                          {getRoleIcon(user?.role)}
+                          <span className={`ml-2 px-2 py-1 rounded-full text-xs font-semibold ${
+                            user?.role === 'ADMIN' 
+                              ? 'bg-purple-100 text-purple-800' 
+                              : 'bg-amber-100 text-amber-800'
+                          }`}>
+                            {user?.role}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {moment(user?.createdAt).format("LL")}
@@ -353,7 +392,7 @@ const AllUsers = () => {
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
-                          className="text-blue-500 hover:text-blue-700 p-2 rounded-full hover:bg-blue-50 transition-colors"
+                          className="text-amber-600 hover:text-amber-800 p-2 rounded-full hover:bg-amber-100 transition-colors"
                           onClick={() => {
                             setUpdateUserDetails(user);
                             setOpenUpdateRole(true);
@@ -365,7 +404,7 @@ const AllUsers = () => {
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
-                          className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50 transition-colors"
+                          className="text-red-600 hover:text-red-800 p-2 rounded-full hover:bg-red-100 transition-colors"
                           onClick={() => handleDeleteUser(user._id)}
                           title="Delete User"
                         >
@@ -376,7 +415,7 @@ const AllUsers = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
+                    <td colSpan="8" className="px-6 py-4 text-center text-sm text-gray-500">
                       {searchQuery ? "No users match your search." : "No users available."}
                     </td>
                   </tr>

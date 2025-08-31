@@ -117,7 +117,7 @@ const LaboratoryTestForm = () => {
         }
 
         try {
-            const response = await fetch("http://localhost:8080/api/add-test", {
+            const response = await fetch("http://localhost:8000/api/add-test", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

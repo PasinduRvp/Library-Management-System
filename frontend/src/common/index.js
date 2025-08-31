@@ -1,4 +1,8 @@
-const backendDomain = "http://localhost:8080";
+// common/index.js - Fixed SummaryApi
+const backendDomain = "http://localhost:8000";
+
+const baseUrl = process.env.REACT_APP_API_URL || '';
+
 
 const SummaryApi = {
     signUp: {
@@ -11,19 +15,20 @@ const SummaryApi = {
     },
     current_user :{
         url : `${backendDomain}/api/user-details`,
-        method : "get"
+        method : "GET"
     },
+
     logout_user : {
         url : `${backendDomain}/api/userLogout`,
-        method : 'get'
+        method : 'GET'
     },
     allUser : {
         url : `${backendDomain}/api/all-users`,
-        method : 'get'
+        method : 'GET'
     },
     updateUser : {
         url : `${backendDomain}/api/update-user`,
-        method : 'post'
+        method : 'POST'
     },
     deleteUser: {
         url: `${backendDomain}/api/delete-user`,
@@ -31,23 +36,23 @@ const SummaryApi = {
     },
     checkIndexNumber: {
         url: `${backendDomain}/api/check-index-number`,
-        method: 'get'
+        method: 'GET'
     },
     allChannelings : {
         url : `${backendDomain}/api/all-channelings`,
-        method : 'get' 
+        method : 'GET' 
     },
     AddChannelingAppointment : {
         url : `${backendDomain}/api/add-channeling-appointment`,
-        method : 'post'
+        method : 'POST'
     },
     allChannelingAppointments : {
         url : `${backendDomain}/api/get-channeling-appointments`,
-        method : 'get' 
+        method : 'GET' 
     },
     updateChannelingAppointment :{
         url : `${backendDomain}/api/update-channeling-appointment`,
-        method : 'post'
+        method : 'POST'
     },
     deleteChannelingAppointment: {
         url: `${backendDomain}/api/delete-channeling-appointment`,
@@ -57,15 +62,15 @@ const SummaryApi = {
 
     addNotice : {
         url : `${backendDomain}/api/add-notice`,
-        method : 'post'
+        method : 'POST'
     },
     allNotices : {
         url : `${backendDomain}/api/get-notice`,
-        method : 'get'
+        method : 'GET'
     },
     updateNotice : {
         url : `${backendDomain}/api/update-notice`,
-        method : 'post'
+        method : 'POST'
     },
     deleteNotice: {
         url: `${backendDomain}/api/delete-notice`,
@@ -75,19 +80,19 @@ const SummaryApi = {
 
     allHomeVisits : {
         url : `${backendDomain}/api/all-homevisits`,
-        method : 'get' 
+        method : 'GET' 
     },
     AddHomeVisitAppointment : {
         url : `${backendDomain}/api/add-homevisit-appointment`,
-        method : 'post'
+        method : 'POST'
     },
     allHomeVisitAppointments : {
         url : `${backendDomain}/api/get-homevisit-appointments`,
-        method : 'get' 
+        method : 'GET' 
     },
     updateHomeVisitAppointment :{
         url : `${backendDomain}/api/update-homevisit-appointment`,
-        method : 'post'
+        method : 'POST'
     },
     deleteHomeVisitAppointment: {
         url: `${backendDomain}/api/delete-home-visit-appointment`,
@@ -173,6 +178,105 @@ const SummaryApi = {
         method: "DELETE",
       },
 
+      // Book APIs
+      getBooks: {
+    url: `${backendDomain}/api/books`,
+    method: "GET",
+  },
+  getBookById: {
+    url: (id) => `${backendDomain}/api/books/${id}`,
+    method: "GET",
+  },
+  addBook: {
+    url: `${backendDomain}/api/books`,
+    method: "POST",
+  },
+  updateBook: {
+    url: (id) => `${backendDomain}/api/books/${id}`,
+    method: "PUT",
+  },
+  deleteBook: {
+    url: (id) => `${backendDomain}/api/books/${id}`,
+    method: "DELETE",
+  },
+
+  createReservation: {
+    url: `${backendDomain}/api/book-reservation`,
+    method: "POST",
+  },
+  getUserReservations: {
+    url: `${backendDomain}/api/user-reservations`,
+    method: "GET",
+  },
+  getAllReservations: {
+    url: `${backendDomain}/api/all-reservations`,
+    method: "GET",
+  },
+
+ updateReservationStatus: {
+  url: (id) => `${backendDomain}/api/reservation-status/${id}`,
+  method: "PUT"
+},
+  cancelReservation: {
+    url: (id) => `${backendDomain}/api/cancel-reservation/${id}`,
+    method: "PUT",
+  },
+
+
+
+  getEBooks: {
+    url: `${backendDomain}/api/e-books`,
+    method: "GET",
+  },
+  getEBookById: {
+    url: (id) => `${backendDomain}/api/e-books/${id}`,
+    method: "GET",
+  },
+  addEBook: {
+    url: `${backendDomain}/api/e-books`,
+    method: "POST",
+  },
+  updateEBook: {
+    url: (id) => `${backendDomain}/api/e-books/${id}`,
+    method: "PUT",
+  },
+  deleteEBook: {
+    url: (id) => `${backendDomain}/api/e-books/${id}`,
+    method: "DELETE",
+  },
+  downloadEBook: {
+    url: (id) => `${backendDomain}/api/e-books/download/${id}`,
+    method: "GET",
+  },
+  changePassword: {
+        url: `${baseUrl}/api/change-password`,
+        method: "PUT"
+    },
+
+    uploadMembershipSlip: {
+    url: `${backendDomain}/api/upload-membership-slip`,
+    method: "POST"
+  },
+  approveMembership: {
+    url: `${backendDomain}/api/approve-membership`,
+    method: "POST"
+  },
+  getAllPendingMemberships: {
+    url: `${backendDomain}/api/pending-memberships`,
+    method: "GET"
+  },
+  
+  // E-Book Viewer
+  viewEBook: {
+    url: (id) => `${backendDomain}/api/e-books/view-pdf/${id}`,
+    method: "GET"
+  },
+
+
+
+
+
+
       getMaterials: {
         url: `${backendDomain}/api/get-course-materials`,
         method: "GET",
@@ -224,9 +328,6 @@ updateMedicalRecords: {
     url: (id) => `${backendDomain}/api/users/${id}/medical-records`,
     method: "POST"
 }
-
-
-
 
 };
 

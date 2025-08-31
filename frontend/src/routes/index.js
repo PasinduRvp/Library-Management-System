@@ -6,7 +6,6 @@ import ForgotPassword from '../pages/ForgotPassword'
 import SignUp from '../pages/SignUp'
 import AdminPanel from '../pages/AdminPanel'
 import AllUsers from '../pages/AllUsers'
-import { GrResources } from 'react-icons/gr'
 import Resources from '../pages/Resources'
 import NursingSchoolAdmin from '../pages/NursingSchoolAdmin'
 import AllChannelingAppointments from '../pages/AllChannelingAppointments'
@@ -32,9 +31,15 @@ import AddChannelingAppointment from '../components/AddChannelingAppointment'
 import OnlineConsultationPage from '../pages/OnlineConsultationPage'
 import MarkAllocationStudent from '../pages/NursingSchoolMarks'
 import Profile from '../pages/Profile'
-import PatientRecords from '../pages/PatientRecords'
-
-
+import BookCollection from '../pages/BookCollectionForm'
+import BookManagement from '../pages/BookManager'
+import BookReservation from '../pages/BookReservation'
+import UserReservations from '../pages/UserReservations'
+import AdminReservations from '../pages/AdminReservations'
+import AboutUs from '../pages/AboutUs '
+import EBooksLibrary from '../pages/EBooksLibrary'
+import AdminEBooks from '../pages/AdminEBooks'
+import PendingMemberships from '../pages/PendingMemberships '
 
 
 const router = createBrowserRouter([
@@ -59,9 +64,26 @@ const router = createBrowserRouter([
                 element : <SignUp/>
             },
             {
-                path : "all-channelings",
-                element : <AllChannelingAppointments/>
+                path : "book-collection",
+                element : <BookCollection/>
             },
+            {
+                path : "aboutUs",
+                element : <AboutUs/>
+            },
+            {
+                path: "e-books",
+                element: <EBooksLibrary/>
+            },
+            {
+                path: "book-reservation",
+                element: <BookReservation/>
+            },
+            {
+                path: "my-reservations",
+                element: <UserReservations/>
+            },
+            
             {
                 path : "all-onlineConsultations",
                 element : <OnlineConsultationPage/>
@@ -79,12 +101,20 @@ const router = createBrowserRouter([
                         element : <AllUsers/>
                     },
                     {
-                        path : "all-channelings",
-                        element : <AllChannelingAppointments/>
-                    },
-                    {
                         path : "Resuorces",
                         element : <Resources/>
+                    }, 
+                    {
+                        path: "admin-reservations",
+                        element: <AdminReservations/>
+                    },
+                    {
+                        path: "membership-management",
+                        element: <PendingMemberships/>
+                    },
+                    {
+                        path : "all-channelings",
+                        element : <AllChannelingAppointments/>
                     },
                     {
                         path : "Nursing-School",
@@ -106,6 +136,15 @@ const router = createBrowserRouter([
                         path : "admin-course-materials",
                         element : <NursingSchoolAdminCourseMaterials/>
                     },
+                    {
+                        path : "book-management",
+                        element : <BookManagement/>
+                    },
+                    {
+                        path: "admin/e-books",
+                        element: <AdminEBooks/>
+                    },
+                    
                     
                 ]
             },
@@ -181,11 +220,6 @@ const router = createBrowserRouter([
                 path :"student-marks",
                 element : <MarkAllocationStudent/>
             },
-            {
-                path : "patient-records", 
-                element : <PatientRecords/>
-            }
-
         ]
     }
 ])

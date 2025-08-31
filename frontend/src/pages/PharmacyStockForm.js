@@ -126,7 +126,7 @@ const PharmacyStockFormPage = () => {
         }
 
         try {
-            const response = await fetch("http://localhost:8080/api/add-stock", {
+            const response = await fetch("http://localhost:8000/api/add-stock", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
