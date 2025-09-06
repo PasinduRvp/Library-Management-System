@@ -48,7 +48,7 @@ const Footer = () => {
                 </li>
                 <li className="flex items-start">
                   <FaClock className="text-amber-300 mt-1 mr-3 flex-shrink-0" />
-                  <span>Mon-Sat: 8:00 AM - 8:00 PM</span>
+                  <span>Mon-Sat: 8:00 AM - 6:00 PM</span>
                 </li>
               </ul>
             </motion.div>
