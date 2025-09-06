@@ -70,7 +70,7 @@ async function addEBook(req, res) {
     });
     
     await newEBook.save();
-    res.json({ success: true, message: "E-Book added successfully!" });
+    res.json({ success: true, message: "E-Book added successfully !" });
   } catch (err) {
     // Remove uploaded files if error occurs
     if (req.files) {
