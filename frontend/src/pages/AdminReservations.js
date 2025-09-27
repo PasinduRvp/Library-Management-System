@@ -37,6 +37,29 @@ const AdminReservations = () => {
     }
   };
 
+  // Function to increase book count
+  const increaseBookCount = async (bookId) => {
+    try {
+      const response = await fetch(SummaryApi.increaseBookCount.url(bookId), {
+        method: SummaryApi.increaseBookCount.method,
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server responded with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.success;
+    } catch (error) {
+      console.error("Error increasing book count:", error);
+      return false;
+    }
+  };
+
   const updateReservationStatus = async (id, status) => {
     try {
       const updateData = {
@@ -70,6 +93,17 @@ const AdminReservations = () => {
       console.log("Response:", data);
       
       if (data.success) {
+        // If status is COMPLETED, increase the book count
+        if (status.toUpperCase() === "COMPLETED") {
+          const reservation = reservations.find(res => res._id === id);
+          if (reservation && reservation.bookId) {
+            const bookCountIncreased = await increaseBookCount(reservation.bookId._id);
+            if (!bookCountIncreased) {
+              toast.warning("Reservation completed but failed to update book count");
+            }
+          }
+        }
+
         toast.success(`Reservation ${status.toLowerCase()} successfully!`);
         setEditingReservation(null);
         setAdminNotes("");

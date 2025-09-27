@@ -75,6 +75,10 @@ const SummaryApi = {
     url: `${backendDomain}/api/all-reservations`,
     method: "GET",
   },
+  increaseBookCount: {
+    url: (bookId) => `/books/${bookId}/increase-count`,
+    method: "PATCH"
+  },
 
  updateReservationStatus: {
   url: (id) => `${backendDomain}/api/reservation-status/${id}`,
