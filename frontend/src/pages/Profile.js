@@ -1,10 +1,11 @@
-// Profile.js - COMPLETE UPDATED VERSION
+// Profile.js - UPDATED WITH USER-FRIENDLY QR CODE DATA
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { 
   MdModeEdit, MdLogout, MdSecurity, MdPerson, MdInfo, MdSave, 
-  MdCancel, MdCameraAlt, MdPayment, MdHistory, MdQrCode 
+  MdCancel, MdCameraAlt, MdPayment, MdHistory, MdQrCode,
+  MdContentCopy, MdCheckCircle
 } from 'react-icons/md';
 import { FaUserShield, FaUser, FaIdCard, FaEnvelope, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
 import { QRCodeSVG } from 'qrcode.react';
@@ -22,6 +23,7 @@ const Profile = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [membershipSlip, setMembershipSlip] = useState(null);
     const [showQRCode, setShowQRCode] = useState(false);
+    const [copiedField, setCopiedField] = useState(null);
     const navigate = useNavigate();
 
     const getDefaultProfilePic = (name = 'User') => {
@@ -178,6 +180,18 @@ const Profile = () => {
         }
     };
 
+    // Copy to clipboard function
+    const copyToClipboard = async (text, fieldName) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            setCopiedField(fieldName);
+            toast.success(`${fieldName} copied to clipboard!`);
+            setTimeout(() => setCopiedField(null), 2000);
+        } catch (err) {
+            toast.error('Failed to copy text');
+        }
+    };
+
     // FIXED: Membership slip upload with better debugging
     const handleMembershipSlipUpload = async (e) => {
         e.preventDefault();
@@ -234,19 +248,142 @@ const Profile = () => {
         }
     };
 
+    // UPDATED: Generate user-friendly QR code data
     const generateQRData = () => {
         if (!userData) return '';
         
-        return JSON.stringify({
-            userId: userData._id,
-            name: userData.name,
-            email: userData.email,
-            registrationNumber: userData.registrationNumber,
-            membershipStatus: userData.membershipStatus,
-            membershipExpiry: userData.membershipExpiry,
-            fines: userData.fines || 0,
-            contactNumber: userData.contactNumber
-        });
+        // Create a structured, readable format for QR code scanning
+        return `LIBRARY MEMBERSHIP CARD
+
+Member Information:
+Name: ${userData.name}
+Email: ${userData.email}
+Registration: ${userData.registrationNumber || 'Pending'}
+Contact: ${userData.contactNumber || 'Not provided'}
+
+Membership Status:
+Status: ${userData.membershipStatus || 'Not registered'}
+Expiry: ${userData.membershipExpiry ? new Date(userData.membershipExpiry).toLocaleDateString() : 'Not available'}
+Outstanding Fines: Rs. ${userData.fines || 0}`;
+    };
+
+    // NEW: Component to display QR code data in user-friendly format
+    const QRCodeDataDisplay = () => {
+        if (!userData) return null;
+
+        const qrData = {
+            "Library Membership Card": "",
+            "Member Information": "",
+            "Name": userData.name,
+            "Email": userData.email,
+            "Registration Number": userData.registrationNumber || 'Pending',
+            "Contact Number": userData.contactNumber || 'Not provided',
+            "Membership Status": "",
+            "Status": userData.membershipStatus || 'Not registered',
+            "Expiry Date": userData.membershipExpiry ? new Date(userData.membershipExpiry).toLocaleDateString() : 'Not available',
+            "Outstanding Fines": `Rs. ${userData.fines || 0}`,
+            "Generated on": new Date().toLocaleDateString()
+        };
+
+        return (
+            <div className="bg-white p-4 rounded-lg border border-amber-200 max-w-md mx-auto">
+                <h3 className="text-lg font-bold text-center text-amber-700 mb-4 border-b pb-2">
+                    Library Membership Card
+                </h3>
+                
+                <div className="space-y-3">
+                    <div className="grid grid-cols-1 gap-2">
+                        <h4 className="font-semibold text-amber-600 text-sm uppercase tracking-wide">Member Information</h4>
+                        
+                        <div className="flex justify-between items-center py-1 border-b">
+                            <span className="text-sm text-gray-600">Name:</span>
+                            <div className="flex items-center gap-2">
+                                <span className="font-medium">{userData.name}</span>
+                                <button 
+                                    onClick={() => copyToClipboard(userData.name, 'name')}
+                                    className="text-amber-600 hover:text-amber-700 transition-colors"
+                                >
+                                    {copiedField === 'name' ? <MdCheckCircle className="text-green-500" /> : <MdContentCopy className="text-sm" />}
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center py-1 border-b">
+                            <span className="text-sm text-gray-600">Email:</span>
+                            <div className="flex items-center gap-2">
+                                <span className="font-medium text-xs">{userData.email}</span>
+                                <button 
+                                    onClick={() => copyToClipboard(userData.email, 'email')}
+                                    className="text-amber-600 hover:text-amber-700 transition-colors"
+                                >
+                                    {copiedField === 'email' ? <MdCheckCircle className="text-green-500" /> : <MdContentCopy className="text-sm" />}
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center py-1 border-b">
+                            <span className="text-sm text-gray-600">Registration:</span>
+                            <div className="flex items-center gap-2">
+                                <span className="font-medium">{userData.registrationNumber || 'Pending'}</span>
+                                {userData.registrationNumber && (
+                                    <button 
+                                        onClick={() => copyToClipboard(userData.registrationNumber, 'registration')}
+                                        className="text-amber-600 hover:text-amber-700 transition-colors"
+                                    >
+                                        {copiedField === 'registration' ? <MdCheckCircle className="text-green-500" /> : <MdContentCopy className="text-sm" />}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center py-1 border-b">
+                            <span className="text-sm text-gray-600">Contact:</span>
+                            <span className="font-medium">{userData.contactNumber || 'Not provided'}</span>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2 pt-2">
+                        <h4 className="font-semibold text-amber-600 text-sm uppercase tracking-wide">Membership Status</h4>
+                        
+                        <div className="flex justify-between items-center py-1 border-b">
+                            <span className="text-sm text-gray-600">Status:</span>
+                            {getMembershipBadge()}
+                        </div>
+                        
+                        <div className="flex justify-between items-center py-1 border-b">
+                            <span className="text-sm text-gray-600">Expiry:</span>
+                            <span className="font-medium">
+                                {userData.membershipExpiry 
+                                    ? new Date(userData.membershipExpiry).toLocaleDateString() 
+                                    : 'Not available'}
+                            </span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center py-1">
+                            <span className="text-sm text-gray-600">Fines:</span>
+                            <span className={`font-medium ${userData.fines > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                Rs. {userData.fines || 0}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="text-center pt-3 border-t">
+                        <p className="text-xs text-gray-500">
+                            Generated on {new Date().toLocaleDateString()}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                            Library Management System
+                        </p>
+                    </div>
+                </div>
+
+                <div className="mt-4 p-3 bg-amber-50 rounded-lg">
+                    <p className="text-xs text-amber-700 text-center">
+                        <strong>Tip:</strong> When scanned, this QR code will display your membership information in a clean, readable format.
+                    </p>
+                </div>
+            </div>
+        );
     };
 
     useEffect(() => {
@@ -318,7 +455,6 @@ const Profile = () => {
         <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 p-4 md:p-8">
             <div className="max-w-6xl mx-auto">
                 
-
                 {/* Profile Header */}
                 <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-6">
                     <div className="bg-gradient-to-r from-amber-600 to-amber-800 p-6 md:p-8 text-white relative">
@@ -679,7 +815,7 @@ const Profile = () => {
                                             </div>
                                         )}
 
-                                        {/* QR Code Section */}
+                                        {/* QR Code Section - UPDATED */}
                                         {userData.membershipStatus === 'ACTIVE' && (
                                             <div className="bg-amber-50 p-4 md:p-5 rounded-xl border border-amber-200">
                                                 <h3 className="text-sm font-medium text-amber-700 mb-4 text-center md:text-left">MEMBERSHIP CARD</h3>
@@ -710,6 +846,9 @@ const Profile = () => {
                                                                 : 'Click to show QR code'}
                                                         </p>
                                                     </div>
+                                                    
+                                                
+                                                    
                                                     <button
                                                         onClick={() => setShowQRCode(!showQRCode)}
                                                         className="mt-4 bg-amber-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-amber-700 transition-colors flex items-center"
